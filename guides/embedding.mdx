@@ -1,0 +1,108 @@
+---
+title: "Embedding"
+description: "Containers, header ownership, stacking context, and SPA route changes"
+---
+
+## Attach and detach
+
+Call `Libra.init()` once at app startup, then `Libra.attach()` when the user opens the widget. The iframe is created on `init()` but the chat session does not start, and no network requests are made, until the first `attach()`.
+
+```html
+<button id="open-chat">Open Chat</button>
+<div id="chat" style="position: fixed; right: 16px; bottom: 16px; width: 400px; height: 600px;"></div>
+```
+
+```javascript
+import { Libra } from '@libra/sdk';
+
+Libra.init({
+  productId: 'wko_de',
+  onClose: () => {
+    Libra.detach();
+  }
+});
+
+document.getElementById('open-chat').addEventListener('click', () => {
+  Libra.attach('chat');
+});
+```
+
+`attach(elementOrId)` accepts a DOM element or an element ID and can be called while the iframe is still loading. It never moves the iframe in the DOM; only its CSS position is updated, so the session and any in-progress streaming response are preserved. `detach()` hides the widget and keeps the iframe alive. Call `attach()` again to reposition it, even to a different container. `destroy()` removes everything; call `init()` again to recreate.
+
+<Tip>
+Give the target element the final size and position you want the chat to have. The wrapper tracks the element's bounding box every frame, so CSS transitions on the container animate the widget with it.
+</Tip>
+
+<Warning>
+Call `init()` **once per page**. A second call without an intervening `destroy()` is ignored with a console warning, and the new config — including a changed `productId` or `locale` — is silently dropped.
+
+The element passed to `attach()` must also stay mounted while the widget is visible; if it is removed the SDK detaches itself and logs a warning. [Panel and placement](/guides/panel-and-placement) covers both, along with panel width and header ownership.
+</Warning>
+
+## Header ownership
+
+The SDK renders its Libra headbar only when `onClose` is provided. The headbar includes the Libra wordmark and close button; clicking close calls `onClose`.
+
+The host product owns close behaviour. In most integrations, `onClose` should hide the product-owned SDK wrapper, such as a side panel or modal, and call `Libra.detach()`:
+
+```javascript
+Libra.init({
+  productId: 'wko_de',
+  onClose: () => {
+    Libra.detach();
+  }
+});
+```
+
+If your product already renders a product-aligned header or close button around the widget, omit `onClose` and call `Libra.detach()` from your own close control.
+
+Header ownership only controls this outer Libra wordmark/close headbar. The authenticated chat screen still renders the existing SDK chat controls.
+
+<Frame caption="Initialised without onClose: no Libra headbar, so the host owns the frame and the close control">
+  <img src="/assets/images/sdk/header-without-onclose.png" alt="Libra widget rendered without the SDK headbar, showing no Libra wordmark and no close button" width="360" />
+</Frame>
+
+## Stacking context
+
+By default the SDK appends its wrapper to `document.body` with `z-index: 999999`. Use `mountTarget` to mount the wrapper inside an element you control, then manage stacking via that element instead of fighting the global `z-index`.
+
+```javascript
+Libra.init({
+  productId: 'wko_de',
+  mountTarget: 'root',
+  zIndex: 5
+});
+```
+
+Give the mount element its own stacking context so the SDK's `z-index` is trapped inside it:
+
+```css
+#root { isolation: isolate; }
+```
+
+With this in place, host overlays inside `#root` can use any `z-index` (e.g. `12`) and stack above the widget naturally.
+
+<Frame caption="A host overlay at z-index 12 covering a widget mounted at zIndex 5 inside an isolated #root">
+  <img src="/assets/images/sdk/host-overlay.png" alt="The playground with a dark host overlay covering both the page content and the Libra widget" />
+</Frame>
+
+### Constraints
+
+- Set `mountTarget` once at init. The iframe cannot be reparented later; moving an iframe in the DOM causes the browser to reload it, destroying the chat session.
+- The mount target must remain in the DOM for the SDK's lifetime.
+- If the configured target is missing at init time, the SDK falls back to `document.body`.
+- **The mount target and its ancestors must not establish a containing block for fixed positioning.** `transform`, `perspective`, `filter`, `backdrop-filter`, `will-change: transform | perspective | filter`, and `contain: paint | layout | content | strict` on any ancestor will silently misplace the widget. **`isolation: isolate` is safe**: it creates a stacking context without creating a containing block. The SDK emits a `console.warn` when it detects a known offender on the mount target's ancestor chain.
+
+## Single-page apps and route changes
+
+Because the iframe lives on `document.body` (or your mount target) rather than inside the route's DOM, a route change that unmounts your chat container does not destroy the session. The SDK detects a removed target, logs a warning, and detaches; call `Libra.attach(newTarget)` from the new route to re-show the same conversation.
+
+In multi-page apps the last active chat is restored after a full reload, as long as the token in `localStorage` is still valid.
+
+## Sizing and the frame around the widget
+
+Panel width, the entry point that opens the widget, and which header the user sees are host-side decisions with their own guide: [Panel and placement](/guides/panel-and-placement).
+
+## Reference integration
+
+The [playground](/getting-started/playground) is itself a host page using `mountTarget: 'root'`, `zIndex: 5` and `isolation: isolate`, with a host overlay at `z-index: 12` that covers the widget. Its source lives in the SDK package at `packages/sdk/site/playground.ts`.

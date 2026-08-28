@@ -1,72 +1,110 @@
 {
   "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "Mintlify Starter Kit",
+  "theme": "maple",
+  "name": "Libra SDK",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#1A1A1A",
+    "light": "#FAFAFA",
+    "dark": "#1A1A1A"
   },
   "favicon": "/favicon.svg",
-  "navigation": {
-    "pages": [
-      {
-        "group": "Getting Started",
-        "pages": [
-          "index",
-          "quickstart"
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Documentation",
-          "href": "https://mintlify.com/docs",
-          "icon": "book-open-cover"
-        },
-        {
-          "anchor": "Blog",
-          "href": "https://mintlify.com/blog",
-          "icon": "newspaper"
-        }
-      ]
+  "fonts": {
+    "heading": {
+      "family": "Fakt Pro",
+      "weight": 700,
+      "source": "/fonts/FaktTT-Bold.woff2",
+      "format": "woff2"
+    },
+    "body": {
+      "family": "Fakt Pro",
+      "weight": 400,
+      "source": "/fonts/FaktTT-Normal.woff2",
+      "format": "woff2"
     }
   },
+  "icons": {
+    "library": "lucide"
+  },
   "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
+    "light": "/assets/images/brand/libra-wk-pos.png",
+    "dark": "/assets/images/brand/libra-wk-rev.png",
+    "href": "/"
   },
   "navbar": {
     "links": [
       {
-        "label": "Support",
-        "href": "mailto:hi@mintlify.com"
+        "label": "Playground",
+        "href": "https://sdk.staging.libratech.ai/playground.html"
+      },
+      {
+        "label": "Libra docs",
+        "href": "https://docs.libratech.ai"
       }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Dashboard",
-      "href": "https://app.mintlify.com"
-    }
+    ]
   },
   "contextual": {
     "options": [
       "copy",
       "view",
-      "chatgpt",
       "claude",
-      "perplexity",
-      "mcp",
-      "cursor",
-      "vscode"
+      "cursor"
     ]
   },
-  "footer": {
-    "socials": {
-      "x": "https://x.com/mintlify",
-      "github": "https://github.com/mintlify",
-      "linkedin": "https://linkedin.com/company/mintlify"
-    }
+  "navigation": {
+    "groups": [
+      {
+        "group": "Getting started",
+        "icon": "rocket",
+        "pages": [
+          "index",
+          "getting-started/quickstart",
+          "getting-started/how-it-works",
+          "getting-started/playground"
+        ]
+      },
+      {
+        "group": "Integration guides",
+        "icon": "plug",
+        "pages": [
+          "guides/installation",
+          "guides/embedding",
+          "guides/panel-and-placement",
+          "guides/authentication",
+          "guides/proxy-mode",
+          "guides/locales",
+          "guides/citations",
+          "guides/document-suggestions",
+          "guides/chat-handoff",
+          "guides/security-headers",
+          "guides/best-practices"
+        ]
+      },
+      {
+        "group": "Capabilities",
+        "icon": "sparkles",
+        "pages": [
+          "capabilities/overview",
+          "capabilities/chat",
+          "capabilities/context-and-sources",
+          "capabilities/plans-and-limits",
+          "capabilities/products-and-sources"
+        ]
+      },
+      {
+        "group": "Reference",
+        "icon": "book-open",
+        "pages": [
+          "reference/api",
+          "reference/types"
+        ]
+      },
+      {
+        "group": "Resources",
+        "icon": "history",
+        "pages": [
+          "changelog"
+        ]
+      }
+    ]
   }
 }

@@ -1,0 +1,33 @@
+---
+title: "Playground"
+description: "Exercise every SDK call against staging without writing code"
+---
+
+The SDK ships a hosted site at [sdk.staging.libratech.ai](https://sdk.staging.libratech.ai) with three tabs: **Docs** (the SDK README), **Changelog**, and **Playground**. The playground is a host page that embeds the current staging build with `productId: 'wko_de'`, mounted inside a simulated app root (`mountTarget: 'root'`, `zIndex: 5`), so it doubles as a reference integration.
+
+<Frame caption="The staging playground: host controls on the left, the widget attached over #chat on the right">
+  <img src="/assets/images/sdk/playground-overview.png" alt="The Libra SDK playground page, with host control buttons on the left and the Libra chat widget docked on the right" />
+</Frame>
+
+## What you can try
+
+| Control | SDK call it exercises |
+|---|---|
+| **Attach** / **Detach** / **Destroy** | `Libra.attach('chat')`, `Libra.detach()`, `Libra.destroy()`. Detach then attach: the conversation is still there. |
+| **Provide onClose handler** checkbox | Re-initialises the widget with or without `onClose`, toggling the Libra headbar. See [Embedding](/guides/embedding#header-ownership). |
+| **Locale** dropdown | `Libra.setLocale(code)` across all 14 supported locales, live. |
+| **Set Suggestion** / **Set Suggestion with Attachment** / **Clear Suggestion** | `Libra.setDocumentSuggestion(doc)` with a real Wolters Kluwer Online document, with and without `attachments`, and `Libra.clearDocumentSuggestion()`. |
+| **Chat ID** + **Open Chat** | `Libra.openChatById(chatId)` for the citation-link handoff. |
+| **Sign out** | `Libra.signOut()`. |
+| **Open host overlay** | A host element with `z-index: 12` covering the widget, demonstrating [stacking context](/guides/embedding#stacking-context) control. |
+| **Navigate to Playground 2 (full reload)** | Proves session restore across a full page load in a multi-page app. |
+
+The status line at the top of the controls prints what the host receives: init state, whether `onClose` was called, the last `onAuthStateChange` payload, the last `onAuthError`, and the last `onCitationClick` event (the playground claims every citation with `preventDefault()` and shows `source` and `url` instead of opening a tab).
+
+<Tip>
+Open the browser console. The playground logs every callback, which is the quickest way to see the exact event shapes documented in the [types reference](/reference/types).
+</Tip>
+
+## Screenshots on this site
+
+Every screenshot and video in these docs is captured from this playground by the repository's Playwright harness, so what you see here is the current staging build, not a mock-up.

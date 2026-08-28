@@ -1,0 +1,98 @@
+---
+title: "The chat surface"
+description: "The composer, answer modes, voice input, answer actions, and how citations are presented"
+---
+
+Everything on this page is the Libra chat UI as it renders **inside the embedded widget**. Where the widget deliberately differs from the Libra Workspace, it says so.
+
+## The composer
+
+<Frame caption="The composer: Tools, Research, the model-tier control, voice, and send">
+  <img src="/assets/images/sdk/suggestion-chip.png" alt="Libra widget composer showing a document suggestion chip, the Tools and Research buttons, the Claude Opus 5 tier control, microphone and send" width="360" />
+</Frame>
+
+| Control | What it does |
+|---|---|
+| **Tools** (`+`) | Attach, Assistants, Workflows, Current Project, Add context. See [Context and sources](/capabilities/context-and-sources#the-tools-menu). |
+| **Research** | Turns research on and picks sources; shows the logos of the active ones. |
+| **Model tier** | Standard, Deep Thinking or Fast — see below. |
+| **Improve** | Rewrites the user's draft prompt into a better one **without sending it**, so they can review it first. An **Undo** button replaces it afterwards, and disappears as soon as the text is edited again. |
+| **Microphone** | Voice input — see below. |
+| **Send** | Becomes a **Stop** button while an answer is generating. |
+
+Inside the widget the composer is pinned to its compact layout, so Tools and Research are icon-only at every panel width. See [Panel and placement](/guides/panel-and-placement#width).
+
+## Answer modes
+
+One control in the composer selects how Libra answers. Its accessible name is *Select model tier*, and it always offers three Libra AI tiers:
+
+<CardGroup cols={3}>
+  <Card title="Standard" icon="circle">
+    Best for most tasks. The default.
+  </Card>
+  <Card title="Deep Thinking" icon="brain">
+    Complex reasoning and analysis.
+  </Card>
+  <Card title="Fast" icon="zap">
+    Quick, everyday questions.
+  </Card>
+</CardGroup>
+
+**Deep Thinking** routes the turn to a reasoning model and skips the planning step, so answers take longer and go deeper. The first time a user picks it, a confirmation dialog warns that complex queries take 2–3 minutes and deep research 5 minutes or more.
+
+Two caveats worth knowing:
+
+- The control's **visible label is not always a tier name.** If the user has enabled *Show Model Selector* in their Libra settings (off by default), the same dropdown also lists individual models, and picking one makes the button read that model's name — for example `Claude Opus 5`.
+- The control is **hidden** while an assistant or a workflow is active, and on model-locked deployments.
+
+<Note>
+Deep Thinking is **not** restricted by subscription tier. Older material describing it as a paid-tier feature is out of date — see [Plans and limits](/capabilities/plans-and-limits).
+</Note>
+
+## While an answer is generating
+
+The microphone and send buttons collapse into a single **Stop** button that ends the response where it is.
+
+Progress appears in a card above the answer. Collapsed and running, it reads *Analyzing…* then *Composing answer…*; when finished it reads *Thought for &lt;time&gt;*. Expanding it reveals the step list under the heading **Actions**, with steps named after what actually ran — *Analyzed query*, *Searching Wolters Kluwer Online*, *Searched a database*, *Searching the web*, *Documents read*.
+
+## Answer actions
+
+Under every finished answer:
+
+| Action | Behaviour |
+|---|---|
+| **Copy** | Copies immediately when the answer cites nothing. When it does cite sources, opens a menu: *Copy with footnotes* or *Copy plain text*. Either way the clipboard carries both rich and plain text, so pasting into Word or Outlook keeps the formatting. |
+| **Regenerate** | Produces a new version. Available on the **latest answer only**. Once an answer has versions, a counter (`2/3`) with arrows appears and stays visible while the new version streams. |
+| **Export** | Opens a menu: Word or PDF (the choice is remembered), an optional *With footnotes* toggle when the answer cites something, then *Export entire chat* or *Export this message*. Downloads as `Libra export <date>.docx` or `.pdf`. |
+| **Create email** | Opens the user's default mail client with the answer as plain text. It does not attach a file. |
+
+## Citations
+
+Citations render as **inline chips** — source name plus source logo — at the exact point in the text where the answer cites them, not gathered at the end of the paragraph. Numbered footnotes with a bibliography appear only when the answer is copied or exported.
+
+When two or more chips for the same source type sit next to each other, they collapse into one chip with a **`+N`** suffix, where N is how many *additional* citations are behind it.
+
+<Steps>
+  <Step title="Hover a chip — the citation card">
+    Shows the source logo and name, the cited content's title, optional metadata such as page or date, and an excerpt of the cited passage. A merged chip adds prev/next arrows and an *N of M citations* counter. The footer carries **Citation list** and **To source**.
+  </Step>
+  <Step title="Open the cited-sources row — the citation list">
+    Every answer that used sources ends with an **`N Cited Sources:`** row. In the widget this opens a modal titled *Citation list* (the Workspace shows it as a side-panel tab). One card per source, one expanded at a time, revealing the cited snippets plus **View source** and **Find in chat**.
+  </Step>
+</Steps>
+
+<Warning>
+**The widget has no document viewer.** Citations into *user-uploaded* documents therefore show no **To source** or **View source** button, and generated Word documents offer download only, with no in-widget preview. Citations into research sources and host-supplied external documents are unaffected — those route through `onCitationClick`. This is a deliberate difference from the Libra web app.
+</Warning>
+
+Where those citation clicks go is the integrating product's decision: see [Citation clicks](/guides/citations).
+
+## Voice input
+
+The microphone button starts dictation. The composer is replaced by a recording bar with a live waveform, an elapsed timer, **Cancel recording** and **Confirm recording**. Confirming shows a *Processing* state, then **appends** the transcript to whatever is already in the composer, so the user can edit before sending.
+
+Sending stays manual unless the user turns on *Settings → Audio → Instant Auto-Send After Voice Transcription*, which is off by default. No language is chosen in the UI or sent with the request; transcription relies on the speech model's own language detection.
+
+<Warning>
+If your page sends a `Permissions-Policy` header it must include `microphone=(self)`, or the microphone is blocked inside the iframe. See [Security headers](/guides/security-headers).
+</Warning>

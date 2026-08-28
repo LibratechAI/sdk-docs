@@ -1,0 +1,6 @@
+.DS_Store
+**/.DS_Store
+# Claude Code local state
+.claude/worktrees/
+.claude/settings.local.json
+# capture harness has its own .gitignore (node_modules, auth session, scratch)

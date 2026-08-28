@@ -1,0 +1,63 @@
+---
+title: "Installation"
+description: "npm from WK Artifactory, or the WK CDN as an ES module or classic script"
+---
+
+import { sdkVersion, sdkReleaseDate } from '/snippets/sdk-version.mdx';
+
+The current release is **v{sdkVersion}** ({sdkReleaseDate}). The same version is published to WK Artifactory and promoted to the WK CDN; pick whichever fits your build.
+
+## npm (Artifactory)
+
+Add the following to your `.npmrc`. You will need an `ARTIFACTORY_TOKEN` environment variable set to your WK Artifactory token.
+
+```
+@libra:registry=https://artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/
+//artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/:_authToken=${ARTIFACTORY_TOKEN}
+```
+
+```bash
+npm install @libra/sdk
+```
+
+The package ships ESM (`dist/libra.js`), UMD/CJS (`dist/libra.umd.cjs`) and TypeScript declarations (`dist/index.d.ts`); bundlers pick the right one through the `exports` map. Locale bundles are separate entry points under `@libra/sdk/locales/<code>`; see [Locales](/guides/locales).
+
+## CDN
+
+The same released SDK version is also promoted to WK CDN after a successful Artifactory publish. Replace `<VERSION>` with the release you are pinning.
+
+<CodeGroup>
+```html ES module
+<script type="module">
+  import { Libra } from 'https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.js';
+
+  Libra.init({
+    productId: 'wko_de',
+    onClose: () => Libra.detach()
+  });
+</script>
+```
+
+```html Classic script tag
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.umd.js"></script>
+<script>
+  const { Libra } = window.Libra;
+  Libra.init({
+    productId: 'wko_de',
+    onClose: () => Libra.detach()
+  });
+</script>
+```
+</CodeGroup>
+
+Use the ES module in modern browsers and bundlers (Vite, Webpack 5+); use the classic tag where module support is not available. With the classic tag the API is on `window.Libra`.
+
+Locale files sit next to the main bundle: `.../<VERSION>/locales/de-DE.js` and `.../<VERSION>/locales/de-DE.umd.js`. Load only the ones you need.
+
+<Note>
+Pin an explicit version in CDN URLs and read the [changelog](/changelog) before moving it. Releases marked **Breaking changes** rename or remove API surface.
+</Note>
+
+## Bundle size
+
+The main bundle ships only `en-US` strings; every other locale is a separate side-loadable file so you pay roughly `max(main, locale)` in download time rather than `main + all locales`.

@@ -1,0 +1,61 @@
+---
+title: "Plans and limits"
+description: "What each subscription includes, the usage limits users hit, and what only the Libra Workspace can do"
+---
+
+Feature access in the embedded widget follows the user's **Libra subscription**, exactly as it does in the Libra Workspace — the widget runs the same enforcement code. The tiers are **Starter**, **Professional** and **Team**.
+
+<Note>
+These limits belong to the user's Libra account, not to your integration. Nothing in `Libra.init()` changes them, and the SDK exposes no API to read them.
+</Note>
+
+## Starter limits
+
+| Limit | Default | Notes |
+|---|---|---|
+| Chat messages | **100 / month** | Per user — each seat on a Starter team gets its own allowance. A failed or errored answer does not consume quota. |
+| Document uploads | **100 / month** | Per user. Chat attachments and workspace uploads count against the same counter; only successful uploads consume it. |
+| Active projects | **3** | Counts active projects the user can reach — owned, shared and team — not projects they created. |
+| Reviews and Discoveries | Not available | Creating them is refused for Starter accounts. |
+
+Both monthly counters reset on the **anniversary of the team's tier start date**, not on the first of the month, and both are overridable per team. When a counter is exhausted the request is refused and the composer surfaces the limit rather than failing silently.
+
+## What Starter is *not* limited on
+
+**Deep Thinking is available on every tier.** The answer-mode selector carries no subscription check. Older product material describing Deep Thinking as a paid-tier feature is out of date.
+
+The mode selector *is* hidden in two situations, neither of them about subscription: while an assistant or workflow is active, and on model-locked deployments.
+
+## Collaboration
+
+Sharing and the **Team** tab in the projects list are what a Team subscription unlocks; without it the tab is locked behind an upsell. Collaboration is also granted to pilot accounts, some grandfathered teams, and trials with team preview enabled — so it does not map strictly onto the tier name.
+
+Project cards always show an access pill (*Just me*, *Everyone in &lt;team&gt;*, *Shared*), on every tier.
+
+## What users see when they hit a limit
+
+- **Message limit reached** — the composer is disabled and says so.
+- **Upload limit reached** — the attach entry point dims and drops are ignored.
+- **Project limit reached** — the create-project modal shows `{used} of {limit} projects used` with a progress bar. In the widget this rarely appears, because creating projects is Workspace-only.
+- **Canceled or expired account** — a full-iframe overlay replaces the chat and offers to open the Libra subscription page in a new tab.
+
+Upgrade prompts inside the widget link to the Libra web app; the widget does not host subscription management.
+
+## Workspace-only capabilities
+
+Available in the widget: chat, research, uploads, citations, export, chat history, project switching, and **running** an existing assistant or workflow.
+
+Workspace-only: **Review, Discovery, Playbooks, drafting documents, creating projects**, and **creating or editing** assistants and workflows. Choosing one of those in the widget opens the Libra Workspace in a new tab. See [Chat handoff](/guides/chat-handoff).
+
+## Per-team restrictions your integration may encounter
+
+Two optional, compliance-driven configurations are arranged with Libra per customer team. Both are **off by default** and neither is set from `Libra.init()`:
+
+| Restriction | Effect in the widget |
+|---|---|
+| Uploads disabled | Every user-facing way to add a file is removed, and uploads are refused by the backend. Host-supplied document suggestions still work. |
+| Workspace access removed | **Continue in Libra** is hidden and any action that would hand off to the Libra web app shows *"This feature is not available for your user."* instead. |
+
+<Warning>
+Removing Workspace access is a significant, hard-to-reverse decision: it also removes that team's access to the Libra web app and to the Word and Outlook add-ins. Discuss it with Libra before requesting it.
+</Warning>
