@@ -1,0 +1,114 @@
+---
+title: "API reference"
+description: "Every Libra.* method and every init() option"
+---
+
+All methods live on the `Libra` object exported from `@libra/sdk` (or `window.Libra.Libra` with the classic CDN script).
+
+## `Libra.init(config)`
+
+Initializes the SDK and creates the iframe. Call after `document.body` exists. Startup is deferred until the first `attach()`.
+
+<Warning>
+**Call `init()` exactly once per page.** A second call without an intervening `destroy()` is a no-op that logs a warning — and because the guard returns before validation, a changed `productId`, `locale` or `proxy` is silently ignored, with no error even for invalid values. To reconfigure, call `destroy()` and then `init()`.
+</Warning>
+
+`init()` throws synchronously when:
+
+| Condition | Message |
+|---|---|
+| `productId` is missing | `[@libra/sdk] productId is required.` |
+| `baseUrl` is not an allowed origin | `[@libra/sdk] Invalid baseUrl.` |
+| `locale` is set to an unregistered locale | see [Locales](/guides/locales) |
+| `proxy.url` is not same-site with the page | see [Proxy mode](/guides/proxy-mode) |
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `mountTarget` | `string \| HTMLElement` | `document.body` | Element (or its ID) to mount the SDK wrapper into. See [Stacking context](/guides/embedding#stacking-context). |
+| `zIndex` | `number` | `999999` | `z-index` applied to the SDK wrapper. |
+| `baseUrl` | `string` | `"https://app.libratech.ai"` | Libra workspace URL. Used for main-app handoffs (opening settings, manage-team, etc. in a new tab) and as the origin for the auth popup. When `proxy` is set, API requests are routed through the proxy instead; `baseUrl` no longer determines where backend calls go. **Validated:** only an `https://<sub>.libratech.ai` origin (such as `app.` or `staging.`) or a `localhost` origin is accepted — `127.0.0.1`, `*.localhost` and a bare `libratech.ai` are rejected, and `init()` throws. |
+| `proxy` | `{ url: string; headers?: Record<string, string>; credentials?: RequestCredentials }` | — | Route all SDK API requests through a BFF proxy instead of directly to `baseUrl`. When set, the localStorage token flow is disabled; auth is handled server-side by the proxy. `headers` are merged into every proxied request. `credentials` defaults to `'same-origin'`. See [Proxy mode](/guides/proxy-mode). |
+| `researchSources` | `ResearchSourceId[]` | `[]` | Pre-selected research sources. Takes **granular source ids** (`one_it_legale`), never product ids (`one_it`). Ids the user is not entitled to are silently dropped once the source catalogue loads, so this is a request rather than a guarantee. Leave it empty and the user's own Libra defaults apply. |
+| `productId` | `ProductId` | **Required** | Identifier of the legal-research product this integration represents (e.g. `'one_it'`). This is different from `researchSources`: one product maps to one or more research sources. |
+| `locale` | `SupportedLocale` | Browser detection | BCP-47 locale code (e.g. `'de-DE'`). Must be registered via `locales` (npm) or a `<script>` tag (CDN); `init()` throws otherwise. Defaults to browser detection, which falls through to `en-US` when no registered locale matches. See [Locales](/guides/locales). |
+| `locales` | `LibraLocaleBundle[]` | `[]` | Additional locale bundles to register (npm consumers). See [Locales](/guides/locales). |
+| `onClose` | `() => void` | — | Optional callback fired when the SDK header close button is clicked. Supplying it enables the SDK header; the host should hide the product-owned SDK wrapper and call `Libra.detach()`. |
+| `onAuthStateChange` | `(state: LibraAuthState) => void` | — | Fired after the SDK restores a session, completes an interactive login, or signs out. |
+| `onAuthError` | `(error: LibraAuthError) => void` | — | Fired when an interactive login attempt is unsuccessful. |
+| `onCitationClick` | `(event: CitationClickEvent) => void` | — | Fired when the user clicks any citation that resolves to a research source, both research-source results and host-supplied external documents. The SDK opens `event.data.url` in a new tab by default; inspect `event.data.source` and call `event.preventDefault()` to claim the citations you handle in-place. If omitted, every citation opens in a new tab. See [Citation clicks](/guides/citations). |
+
+## `Libra.attach(elementOrId)`
+
+Visually positions the widget over the given target element. The iframe is never moved in the DOM, only its CSS position is updated, so the chat session and any in-progress streaming response are fully preserved across re-attaches. Accepts a DOM element or a string element ID. Can be called while the iframe is still loading.
+
+<Warning>
+**The target must stay in the DOM while the widget is visible.** If a re-render removes it, the SDK detaches itself and logs `Target element was removed from the DOM — widget detached.` The session is preserved; call `attach(newTarget)` to bring it back. Hiding a conditionally-rendered container with CSS instead of unmounting it avoids this — see [Panel and placement](/guides/panel-and-placement#keep-the-attach-target-mounted).
+</Warning>
+
+## `Libra.detach()`
+
+Hides the widget. The iframe stays alive so the session is preserved. Call `attach()` again to reposition it, even to a different container.
+
+## `Libra.destroy()`
+
+Removes the iframe and cleans up all resources. To re-create the widget afterwards, call `init()` again.
+
+## `Libra.setDocumentSuggestion(doc)`
+
+Suggests an external document the user is currently viewing; a chip above the message input lets the user attach it (and its `attachments`) to the conversation. Calling it again replaces the previous suggestion. Full behaviour, including the availability check, on [Document suggestions](/guides/document-suggestions).
+
+```javascript
+Libra.setDocumentSuggestion({
+  id: 'doc-uuid-123',
+  title: 'Article 162 [Tort]',
+  url: 'https://research.example.com/document/doc-uuid-123',
+  source: 'wko_de',
+  attachments: [
+    {
+      id: 'pdf-attachment-1',
+      title: 'Related PDF',
+      url: 'https://research.example.com/files/pdf-attachment-1.pdf',
+      source: 'wko_de'
+    }
+  ]
+});
+```
+
+## `Libra.clearDocumentSuggestion()`
+
+Clears the current document suggestion (e.g. when the user navigates away from the document).
+
+## `Libra.openChatById(chatId)`
+
+Opens an existing Libra chat in an attached SDK session. Call it after `Libra.attach()`; it logs and does nothing when there is no active SDK session. See [Chat handoff](/guides/chat-handoff).
+
+```javascript
+const chatId = new URL(window.location.href).searchParams.get('libraChatId');
+
+await Libra.attach('chat');
+
+if (chatId) {
+  await Libra.openChatById(chatId);
+}
+```
+
+## `Libra.setLocale(locale)`
+
+Updates the widget's UI language at runtime. Translated strings re-render in place, the chat session is preserved, and the locale is persisted in the iframe's `localStorage`. The target locale must have been registered at init time (see [Locales](/guides/locales)).
+
+```javascript
+Libra.setLocale('de-DE');
+```
+
+## `Libra.signOut()`
+
+Signs the user out and shows the login screen. In [proxy mode](/guides/proxy-mode), removes the user's identity link on the backend (best-effort); the next re-authentication requires re-linking.
+
+## Request headers the SDK sends
+
+| Header | Purpose |
+|---|---|
+| `X-Libra-SDK-Product-ID` | The `productId` from `init()`, on every backend request. |
+| `X-Libra-SDK-Version` | The SDK version, so the backend can track usage and errors per release. |
+
+In proxy mode your BFF adds `X-Libra-SDK-Product-Access-Token`, `X-Libra-SDK-Product-ID-Token` (opaque-token products only), `X-Correlation-ID` and `Authorization`; see [Proxy mode](/guides/proxy-mode).

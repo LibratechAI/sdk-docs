@@ -1,0 +1,131 @@
+---
+title: "Types"
+description: "The TypeScript types exported by @libra/sdk"
+---
+
+All types are exported from `@libra/sdk`. The built `.d.ts` files have no third-party type dependencies, so consumers need neither `skipLibCheck` nor Svelte/i18next in their dependencies.
+
+```typescript
+import type {
+  LibraConfig,
+  LibraAuthState,
+  LibraAuthError,
+  LibraAuthErrorReason,
+  LibraLocaleBundle,
+  ExternalDocument,
+  ExternalDocumentAttachment,
+  CitationClickEvent,
+  CitationClickEventData,
+  ProductId,
+  ResearchSourceId,
+  SupportedLocale
+} from '@libra/sdk';
+
+type LibraConfig = {
+  baseUrl?: string;
+  mountTarget?: string | HTMLElement;
+  zIndex?: number;
+  researchSources?: ResearchSourceId[];
+  productId: ProductId;
+  locale?: SupportedLocale;
+  locales?: LibraLocaleBundle[];
+  proxy?: {
+    url: string;
+    headers?: Record<string, string>;
+    credentials?: RequestCredentials;
+  };
+  onAuthStateChange?: (state: LibraAuthState) => void;
+  onAuthError?: (error: LibraAuthError) => void;
+  onClose?: () => void;
+  onCitationClick?: (event: CitationClickEvent) => void;
+};
+
+type LibraLocaleBundle = {
+  code: string;
+  translations: Record<string, string>;
+};
+
+type CitationClickEventData = {
+  source: ResearchSourceId;     // owning research source, e.g. 'wko_de'
+  url: string;                  // navigation target (may include ?documentAnchor)
+  content?: string;             // cited-passage text — present for "To source", absent for "View source"
+};
+
+type CitationClickEvent = {
+  data: CitationClickEventData; // the clicked citation
+  preventDefault(): void;       // call to stop the SDK opening data.url in a new tab
+};
+
+type LibraAuthState =
+  | { status: 'authenticated'; source: 'existing_session' | 'signin' | 'signup' }
+  | { status: 'unauthenticated'; source: 'no_session' | 'signout' };
+
+type LibraAuthErrorReason =
+  | 'popup_blocked'          // the browser blocked the auth popup
+  | 'popup_closed'           // the user closed it, or it closed without a session
+  | 'authentication_failed'  // the login attempt itself failed
+  | 'embedded_auth_failed'   // proxy-mode link/exchange failed, or the chat app failed to mount
+  | 'account_in_use';        // the WK account is already linked to another Libra user
+
+type LibraAuthError = {
+  source: 'signin' | 'signup';
+  reason: LibraAuthErrorReason;
+};
+
+type ExternalDocument = {
+  id: string;
+  title: string;
+  url: string;
+  source: Exclude<ResearchSourceId, 'web_search'>;
+  attachments?: ExternalDocumentAttachment[];
+};
+
+type ExternalDocumentAttachment = Omit<ExternalDocument, 'attachments'>;
+
+type ProductId =
+  | 'wko_de' | 'egov_praxis_de'
+  | 'inview_legal_nl' | 'inview_tax_nl' | 'legal_intelligence_nl'
+  | 'inview_legal_be' | 'inview_tax_be' | 'socialeye_be' | 'monkey_be'
+  | 'lex_pl' | 'one_it' | 'sintact_ro'
+  | 'jogtar_hu' | 'aspi_cz' | 'aspi_sk' | 'kleos';
+
+type ResearchSourceId =
+  | 'web_search'
+  | 'wko_de' | 'lex_pl' | 'inview_legal_nl'
+  | 'inview_legal_be' | 'socialeye_be'
+  | 'one_it_legale' | 'one_it_fiscale' | 'one_it_fiscale_advanced'
+  | 'one_it_lavoro' | 'one_it_penale' | 'one_it_legale_amministrativo'
+  | 'jogtar_hu' | 'sintact_ro' | 'aspi_cz' | 'aspi_sk'
+  | 'legal_intelligence_nl' | 'inview_tax_nl' | 'inview_tax_be' | 'monkey_be'
+  | 'egov_praxis_de_jobcenter' | 'egov_praxis_de_sozial'
+  | 'htk_de_auslr' | 'htk_de_star'
+
+type SupportedLocale =
+  | 'en-US'
+  | 'de-DE' | 'de-CH'
+  | 'pl-PL'
+  | 'nl-NL' | 'nl-BE'
+  | 'fr-BE' | 'fr-CH'
+  | 'it-IT' | 'it-CH'
+  | 'ro-RO' | 'hu-HU'   | 'cs-CZ' | 'sk-SK';
+```
+
+## Where each type is used
+
+| Type | Used by |
+|---|---|
+| `LibraConfig` | [`Libra.init()`](/reference/api#libra-init-config) |
+| `LibraAuthState`, `LibraAuthError` | `onAuthStateChange`, `onAuthError`; see [Authentication](/guides/authentication) |
+| `LibraLocaleBundle`, `SupportedLocale` | `locales`, `locale`, `Libra.setLocale()`; see [Locales](/guides/locales) |
+| `ExternalDocument`, `ExternalDocumentAttachment` | `Libra.setDocumentSuggestion()`; see [Document suggestions](/guides/document-suggestions) |
+| `CitationClickEvent`, `CitationClickEventData` | `onCitationClick`; see [Citation clicks](/guides/citations) |
+| `ProductId`, `ResearchSourceId` | `productId`, `researchSources`, `source` fields; see [Products and sources](/capabilities/products-and-sources) |
+
+<Warning>
+The SDK's own README is currently **incomplete on two of these types**, so code written from it can miss real cases:
+
+- It omits `LibraAuthErrorReason` from the export list and prints only three of the five reasons. A `switch` on `error.reason` written from the README falls through on `embedded_auth_failed` and `account_in_use`.
+- Its printed `ResearchSourceId` union omits `'web_search'`, even though the same README excludes that member from `ExternalDocument.source`. `web_search` is valid in `init({ researchSources })` and as a `CitationClickEventData.source`; it is excluded only from `ExternalDocument.source`.
+
+The unions above are taken from the SDK source (`packages/sdk/src/lib/types.ts`), not from the README.
+</Warning>

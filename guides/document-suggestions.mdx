@@ -1,0 +1,76 @@
+---
+title: "Document suggestions"
+description: "Offer the document the user is reading as context for the conversation"
+---
+
+`Libra.setDocumentSuggestion(doc)` suggests an external document the user is currently viewing. A suggestion chip ("+ [title]") appears above the message input, labeled with the root document's title, and the SDK checks the whole group (root plus any `attachments`) against the integrator's FAB index in the background by calling `POST /api/v1/external-documents/availability`. When the chip is clicked, every missing group member is attached to the composer if the group is available and the LLM can retrieve their content; if the check is still pending, the chip shows loading and attaches after it succeeds, or shows unavailable/error feedback if it fails. If the background check already found the group unavailable (`409`) or hit another error, the first click shows that result without checking again; a later click retries. Calling this again replaces the previous suggestion.
+
+<Frame caption="The suggestion chip above the composer, after setDocumentSuggestion()">
+  <img src="/assets/images/sdk/suggestion-chip.png" alt="Libra widget with a '+ Amtsgericht Koln Urt....' document suggestion chip above the message input" width="360" />
+</Frame>
+
+```javascript
+Libra.setDocumentSuggestion({
+  id: 'doc-uuid-123',
+  title: 'Article 162 [Tort]',
+  url: 'https://research.example.com/document/doc-uuid-123',
+  source: 'wko_de',
+  attachments: [
+    {
+      id: 'pdf-attachment-1',
+      title: 'Related PDF',
+      url: 'https://research.example.com/files/pdf-attachment-1.pdf',
+      source: 'wko_de'
+    }
+  ]
+});
+```
+
+## Attachments
+
+Optional `attachments` let you suggest related files (for example PDFs) alongside the primary document. Each attachment has the same required fields as the root document (`id`, `title`, `url`, `source`). Availability is atomic per group: a partial FAB miss attaches nothing and shows the "Content unavailable" notice. The chip stays visible until every group member (root + attachments) is already attached.
+
+## It does not track navigation
+
+The chip shows **one label — the root document's title** — even when the suggestion is a group. It has no awareness of your page, so your product must drive it:
+
+- Call `setDocumentSuggestion()` on **every** document change. Each call replaces the previous suggestion.
+- Call `clearDocumentSuggestion()` when the user leaves the document, or the stale chip persists — including into a new chat.
+- Re-supply it after a full page navigation. Suggestion state is **in-memory only** and does not survive a page load, unlike the chat itself.
+
+## Clearing
+
+`Libra.clearDocumentSuggestion()` clears the current document suggestion, for example when the user navigates away from the document.
+
+```javascript
+router.afterEach((to) => {
+  if (to.meta.document) Libra.setDocumentSuggestion(to.meta.document);
+  else Libra.clearDocumentSuggestion();
+});
+```
+
+## What "attached" means
+
+The document joins the same composer attachment row as an uploaded file, but it is **not an upload**: no file transfer, no indexing, and **no document quota consumed**. Libra retrieves the content on demand at answer time from your FAB index. Its chip opens the source URL in a new tab rather than a preview, and the model cites it as an external-document citation.
+
+## What the user sees when it is unavailable
+
+Availability is checked in the background as soon as the chip appears, and is **atomic per group** — if any member is missing, nothing is attached.
+
+| Situation | What appears |
+|---|---|
+| Group unavailable in the FAB index | The chip is replaced by an inline, dismissible **Content unavailable** notice: *"This content can't be used. It may still be processing, unavailable in your AI content access, or restricted from AI use."* It auto-hides after about six seconds, and then the chip returns so the user can retry. |
+| The availability check itself failed | A toast: *"We could not check whether this document is available for AI. Please try again."* This is also what a missing entitlement or an unlaunched jurisdiction looks like. |
+| Check still running when clicked | The chip shows a loading state and attaches when the check returns. |
+
+Only two of the three reasons in that notice are signals Libra actually receives — entitlement and FAB-index presence. "Still processing" and "restricted from AI use" are plausible explanations for an index miss, which is why the copy lists them together.
+
+## When the document is cited
+
+When the LLM cites the document in its response, the citation behaves like any other; see [Citation clicks](/guides/citations) for how to intercept navigation. An external-document citation arrives with `kind: 'external_document'` and carries the `source` you supplied.
+
+## Requirements
+
+- `source` must be a `ResearchSourceId` other than `web_search`; see [Products and sources](/capabilities/products-and-sources).
+- The document must be indexed in your product's FAB index. The SDK only *offers* the document; retrieval of its content happens on the Libra side through that index, which is why availability is checked before attaching.
+- The types are `ExternalDocument` and `ExternalDocumentAttachment`; see the [types reference](/reference/types).

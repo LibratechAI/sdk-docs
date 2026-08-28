@@ -1,0 +1,82 @@
+---
+title: "Locales"
+description: "Ship only the languages you need and switch them at runtime"
+---
+
+The SDK bundle ships only the `en-US` translations to keep the default download small. Any other locale is published as a separate side-loadable file under `dist/locales/<code>.{js,umd.cjs}`. Load only the languages you need; they fetch in parallel with the main bundle, so you pay download cost roughly equal to `max(main, locale)` instead of `main + all locales`.
+
+Both `Libra.init({ locale })` and `Libra.setLocale(locale)` throw synchronously when called with an unregistered locale, so the failure surfaces at the call site instead of silently rendering English. Browser-detected fallback (when `locale` is unset at init) still resolves to `en-US` if no registered locale matches.
+
+## Supported locales
+
+`en-US` · `de-DE` · `de-CH` · `pl-PL` · `nl-NL` · `nl-BE` · `fr-BE` · `fr-CH` · `it-IT` · `it-CH` · `ro-RO` · `hu-HU` · `cs-CZ` · `sk-SK`
+
+<Frame caption="The same session after Libra.setLocale('de-DE'): the interface is German, the conversation is untouched">
+  <img src="/assets/images/sdk/locale-de.png" alt="Libra widget in German showing '12 zitierte Quellen' and Kopieren / Neu generieren / Exportieren actions above the same answer" width="360" />
+</Frame>
+
+## npm consumers
+
+Import the locale defaults and pass them to `Libra.init({ locales })`:
+
+```javascript
+import { Libra } from '@libra/sdk';
+import deDE from '@libra/sdk/locales/de-DE';
+import frCH from '@libra/sdk/locales/fr-CH';
+
+Libra.init({
+  productId: 'wko_de',
+  locale: 'de-DE',
+  locales: [deDE, frCH]
+});
+```
+
+## CDN consumers: classic script tag
+
+Each locale's UMD bundle self-registers into `window.__libraLocales__`, which `Libra.init()` drains automatically; no `locales` field needed:
+
+```html
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/locales/de-DE.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/locales/fr-CH.umd.js"></script>
+<script>
+  const { Libra } = window.Libra;
+  Libra.init({ locale: 'de-DE' });
+</script>
+```
+
+The order of the locale script tags relative to the main `libra.umd.js` does not matter as long as all of them load before `Libra.init()` is called.
+
+## CDN consumers: ES module
+
+Load the SDK and the locales you need in parallel, then pass the defaults to `init()`:
+
+```html
+<script type="module">
+  const cdnBase = 'https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>';
+
+  const [{ Libra }, deDE, frCH] = await Promise.all([
+    import(`${cdnBase}/libra.js`),
+    import(`${cdnBase}/locales/de-DE.js`).then((m) => m.default),
+    import(`${cdnBase}/locales/fr-CH.js`).then((m) => m.default)
+  ]);
+
+  Libra.init({
+    productId: 'wko_de',
+    locale: 'de-DE',
+    locales: [deDE, frCH]
+  });
+</script>
+```
+
+The `Promise.all` ensures the locale bundles fetch in parallel with the SDK; overall wall-clock load time is roughly `max(libra.js, largest locale)` instead of the sum.
+
+## Switching at runtime
+
+`Libra.setLocale(locale)` updates the widget's UI language at runtime. Translated strings re-render in place, the chat session is preserved, and the locale is persisted in the iframe's `localStorage`. The target locale must have been registered at init time.
+
+```javascript
+Libra.setLocale('de-DE');
+```
+
+The Auth0 login popup follows the configured locale as well.

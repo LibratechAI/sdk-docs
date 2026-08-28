@@ -1,0 +1,57 @@
+---
+title: "Products and sources"
+description: "The product IDs the SDK accepts and the research sources each one can search"
+---
+
+Every integration declares a **product** (`productId`, required) and may pre-select **research sources** (`researchSources`). These are different things: one product maps to one or more research sources. For example, the product `one_it` covers the sources `one_it_legale`, `one_it_fiscale`, `one_it_fiscale_advanced`, `one_it_lavoro`, `one_it_penale` and `one_it_legale_amministrativo`.
+
+```javascript
+Libra.init({
+  productId: 'one_it',
+  researchSources: ['one_it_legale', 'one_it_fiscale']
+});
+```
+
+The product ID is sent on every backend request as the `X-Libra-SDK-Product-ID` header, so Libra knows which integration is calling.
+
+## Product IDs
+
+| `productId` | Product |
+|---|---|
+| `wko_de` | Wolters Kluwer Online (Germany) |
+| `egov_praxis_de` | eGov-Praxis (Germany, public sector) |
+| `inview_legal_nl` | InView Legal (Netherlands) |
+| `inview_tax_nl` | InView Tax (Netherlands) |
+| `legal_intelligence_nl` | Legal Intelligence (Netherlands) |
+| `inview_legal_be` | InView Legal (Belgium) |
+| `inview_tax_be` | InView Tax (Belgium) |
+| `socialeye_be` | SocialEye (Belgium) |
+| `monkey_be` | monKEY (Belgium) |
+| `lex_pl` | LEX (Poland) |
+| `one_it` | One (Italy) |
+| `sintact_ro` | Sintact (Romania) |
+| `jogtar_hu` | Jogtár (Hungary) |
+| `aspi_cz` | ASPI (Czech Republic) |
+| `aspi_sk` | ASPI (Slovakia) |
+| `kleos` | Kleos |
+
+## Research source IDs
+
+`wko_de` · `lex_pl` · `inview_legal_nl` · `inview_legal_be` · `socialeye_be` · `one_it_legale` · `one_it_fiscale` · `one_it_fiscale_advanced` · `one_it_lavoro` · `one_it_penale` · `one_it_legale_amministrativo` · `jogtar_hu` · `sintact_ro` · `aspi_cz` · `aspi_sk` · `legal_intelligence_nl` · `inview_tax_nl` · `inview_tax_be` · `monkey_be` · `egov_praxis_de_jobcenter` · `egov_praxis_de_sozial` · `htk_de_auslr` · `htk_de_star`
+
+`ResearchSourceId` is limited to the sources the SDK exposes. Sources of the main Libra app that the SDK does not offer (general legal and web search, Swiss, EU and US sources) are not valid values.
+
+<Warning>
+Slugs were renamed in **v0.11.0** to product-oriented names (`wolters_kluwer_nl` became `inview_legal_nl`, `wolters_kluwer_de` became `wko_de`). The old slugs are no longer accepted.
+</Warning>
+
+## Where the IDs are used
+
+| Field | Type | Page |
+|---|---|---|
+| `init({ productId })` | `ProductId` | [API reference](/reference/api) |
+| `init({ researchSources })` | `ResearchSourceId[]` | [API reference](/reference/api) |
+| `setDocumentSuggestion({ source })` | `ResearchSourceId` (not `web_search`) | [Document suggestions](/guides/document-suggestions) |
+| `onCitationClick` → `event.data.source` | `ResearchSourceId` | [Citation clicks](/guides/citations) |
+
+The TypeScript unions are in the [types reference](/reference/types).

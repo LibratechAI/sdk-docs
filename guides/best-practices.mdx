@@ -1,0 +1,57 @@
+---
+title: "Integration best practices"
+description: "A checklist distilled from the SDK's contract and the integrations that went smoothly"
+---
+
+Each item below is a rule the SDK's README states or implies. Follow the links for the reasoning.
+
+## Before you write any code
+
+- **Register every embedding origin with Libra** — development, staging and production — before testing. An unregistered origin does not report itself: the popup closes with `reason: 'popup_closed'` and the widget then sits on the login screen forever. [Authentication](/guides/authentication#register-your-domain-before-you-go-live)
+- **Pin `baseUrl` to an allowed origin.** Only `*.libratech.ai` and `localhost` are accepted; anything else throws at `init()`. [API reference](/reference/api)
+
+## Lifecycle
+
+- **`init()` once at startup, `attach()` on user intent.** `init()` is free (no network); the session starts on the first `attach()`. Trigger it from a click so the auth popup is not blocked. [Embedding](/guides/embedding)
+- **Never call `init()` twice.** The second call is a silent no-op and your new config is discarded. `destroy()` first if you must reconfigure.
+- **Keep the attach target mounted.** Hide the container with CSS rather than unmounting it, or the SDK detaches itself on the next frame. [Panel and placement](/guides/panel-and-placement#keep-the-attach-target-mounted)
+- **Never destroy to hide.** `detach()` keeps the conversation; `destroy()` throws it away. Reserve `destroy()` for teardown.
+- **Decide header ownership up front.** Either pass `onClose` and let the widget draw its Libra headbar, or omit it and render your own close control that calls `Libra.detach()`. Don't do both. [Header ownership](/guides/embedding#header-ownership)
+
+## Layout
+
+- **Mount into an element you control** with `mountTarget`, give it `isolation: isolate`, and set a modest `zIndex`. Then your overlays stack above the widget with ordinary z-index values. [Stacking context](/guides/embedding#stacking-context)
+- **Give the panel at least 380–400px.** Below 400px the composer controls shrink; above it, extra width only reflows content — it never reveals more features. [Panel and placement](/guides/panel-and-placement#width)
+- **Decide header ownership deliberately.** Without `onClose` the iframe has no close control at all, so your product must provide one.
+- **Keep `transform`, `filter`, `perspective`, `backdrop-filter`, `will-change` and `contain` off the mount target's ancestor chain.** Any of them silently misplaces the fixed-position wrapper; the SDK warns in the console when it spots one.
+- **Never reparent the mount target.** Moving an iframe in the DOM reloads it and ends the session.
+
+## Locales
+
+- **Register only the locales you ship**, and register them before `init()`. Unregistered locales throw at the call site, by design. [Locales](/guides/locales)
+- **Load locale bundles in parallel with the main bundle** (`Promise.all` on the CDN, or imports in your bundler) so the extra language costs no wall-clock time.
+
+## Context and citations
+
+- **Set the suggestion when the document view mounts, clear it when it unmounts.** A stale chip attaches the wrong document. [Document suggestions](/guides/document-suggestions)
+- **Claim only your own citations.** In `onCitationClick`, check `event.data.source` and call `preventDefault()` for sources you can render; leave the rest to the default new tab. [Citation clicks](/guides/citations)
+- **Use `content` to scroll.** When present it is the exact cited passage; search for it in your viewer after navigating to `url`.
+- **Call `preventDefault()` first, then navigate.** If your handler throws afterwards the SDK still opens its default tab, but only if you had not already claimed the citation.
+- **Don't expect a document viewer.** Uploaded-document citations have no "To source" control inside the widget. [Citation clicks](/guides/citations#what-the-widget-cannot-open)
+
+## Security and headers
+
+- **Allow `blob:` frames and same-origin framing** on every SDK-enabled page; never `X-Frame-Options: DENY`. [Security headers](/guides/security-headers)
+- **Allow `microphone=(self)`** if you set a `Permissions-Policy`, or voice input silently fails.
+
+## Proxy mode
+
+- **Cache the token exchange per user (~60 s).** The SDK bursts requests on load; a fresh exchange per call trips Auth0's rate limit. [Proxy mode](/guides/proxy-mode)
+- **Recover in the BFF, not in the browser.** The widget only understands `401` (show login) and "anything else" (generic error). Refresh expired product tokens and retry transient failures before a response reaches the SDK.
+- **One correlation ID per request, and never a token in a log.** Error monitoring on the BFF is required; it is the only place auth failures are visible.
+- **Forward `X-Libra-SDK-Version` as well as `X-Libra-SDK-Product-ID`.** A header allowlist built from the SDK README drops the version header, and the backend then falls back to pre-0.10.1 behaviour that inlines chat images as base64. [Proxy mode](/guides/proxy-mode)
+
+## Releases
+
+- **Pin the version** in CDN URLs and in `package.json`, and read the [changelog](/changelog) before moving it. Breaking releases are tagged and have renamed or removed API in the past (research-source slugs, `containerId`, `onExternalDocumentCitationClick`).
+- **Try it on the [playground](/getting-started/playground) first.** It embeds the current staging build and exercises every API call from a plain host page.

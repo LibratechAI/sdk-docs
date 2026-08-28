@@ -1,0 +1,30 @@
+{
+  "name": "libra-sdk-docs-screenshots",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playwright screenshot + video pipeline for the Libra SDK docs (targets the staging playground).",
+  "type": "module",
+  "scripts": {
+    "auth": "tsx src/cli.ts auth",
+    "capture": "tsx src/cli.ts capture",
+    "list": "tsx src/cli.ts list",
+    "validate": "tsx src/cli.ts validate",
+    "render": "tsx src/render.ts",
+    "render:verify": "tsx src/render.ts --verify",
+    "frames": "tsx src/sample_frames.ts",
+    "check": "tsx src/visual_check.ts",
+    "check:serve": "tsx src/visual_check.ts --serve"
+  },
+  "devDependencies": {
+    "@ffprobe-installer/ffprobe": "^2.1.2",
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "commander": "^12.1.0",
+    "dotenv": "^16.4.5",
+    "ffmpeg-static": "^5.2.0",
+    "sharp": "^0.33.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "yaml": "^2.6.1"
+  }
+}

@@ -1,0 +1,63 @@
+---
+title: "Capabilities"
+description: "What end users get when a Wolters Kluwer product embeds the Libra SDK"
+---
+
+The SDK puts the Libra legal-research chat inside a Wolters Kluwer product, beside the content the user is already working with. This page is the overview; the pages under it describe each area in detail, and the [integration guides](/guides/embedding) describe how a product wires it up.
+
+<video autoPlay muted loop playsInline src="/assets/videos/sdk-embed-tour.webm" className="rounded-xl border" style={{ maxWidth: "360px", width: "100%", display: "block", margin: "0 auto" }} />
+
+<Note>
+Wolters Kluwer product material calls this the **Libra Add-in**. These docs say *embedded widget*, to keep it distinct from the Word and Outlook add-ins — a separate surface whose conversations live in their own list and do not appear here.
+</Note>
+
+## What the widget is
+
+It is the Libra chat, running in an isolated iframe inside your product, signed in as the user's own Libra account. Conversations, projects, uploaded files and assistants are the **same records** the user sees in the Libra Workspace — not a copy. A chat started in the widget can be finished in the Workspace and vice versa.
+
+<CardGroup cols={2}>
+  <Card title="The chat surface" icon="message-square" href="/capabilities/chat">
+    Composer, answer modes, voice input, answer actions, and how citations are presented.
+  </Card>
+  <Card title="Context and sources" icon="library" href="/capabilities/context-and-sources">
+    Research sources, the document on screen, uploads, @-mentions, projects and history.
+  </Card>
+  <Card title="Plans and limits" icon="gauge" href="/capabilities/plans-and-limits">
+    What each subscription includes, the usage limits, and what only the Workspace can do.
+  </Card>
+  <Card title="Products and sources" icon="list" href="/capabilities/products-and-sources">
+    Every `productId` and `ResearchSourceId` the SDK accepts.
+  </Card>
+</CardGroup>
+
+## What it does, in one screen
+
+Research grounded in the product's Wolters Kluwer sources, answers that cite what they used, and the document the user is reading available as context in one click.
+
+<Frame caption="An answer in the embedded widget: inline citation chips, the cited-sources row, and the answer actions">
+  <img src="/assets/images/sdk/chat-hero.png" alt="Libra widget showing a German legal answer with inline citation chips, a '12 Cited Sources' row, and Copy / Regenerate / Export / Create email actions" width="360" />
+</Frame>
+
+## What is in the widget, and what is not
+
+| In the embedded widget | Libra Workspace only |
+|---|---|
+| Chat, with research over the product's sources | Creating or editing assistants and workflows |
+| **Running** an existing assistant or workflow | Review, Discovery, Playbooks |
+| Uploading and attaching documents | Drafting documents |
+| Chat history and project switching (current project) | Creating projects |
+| Citations, export, email drafting | Team and subscription administration |
+
+Users reach the Workspace through **Continue in Libra**, which opens the same conversation in a new browser tab. See [Chat handoff](/guides/chat-handoff).
+
+## Fourteen languages
+
+`en-US`, `de-DE`, `de-CH`, `pl-PL`, `nl-NL`, `nl-BE`, `fr-BE`, `fr-CH`, `it-IT`, `it-CH`, `ro-RO`, `hu-HU`, `cs-CZ`, `sk-SK` — switchable at runtime without losing the conversation, and the sign-in screen follows the same language. See [Locales](/guides/locales).
+
+## Sign-in without leaving the product
+
+Existing users sign in through a popup; new users can create an account and complete onboarding inside the widget. Products with their own single sign-on can remove the popup entirely with [proxy mode](/guides/proxy-mode). Accounts in a restricted state see a clear notice rather than a blank panel. See [Authentication](/guides/authentication).
+
+## Version and release cadence
+
+Every release is listed in the [changelog](/changelog), published to WK Artifactory and the WK CDN together, so products upgrade deliberately.

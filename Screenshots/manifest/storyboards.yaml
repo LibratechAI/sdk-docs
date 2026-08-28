@@ -1,0 +1,38 @@
+# Video storyboards. `npm run render -- --id <id>` → assets/videos/<slug>.webm (VP9, 1280×720).
+#   mode: composed — from stills in assets/images/sdk (capture them first). Reliable default.
+#   mode: live     — real recording on the playground; selectors resolve inside the SDK iframe
+#                    (`host:` prefix for the page); every step asserts, so a moved selector FAILS
+#                    the render instead of recording garbage.
+# Normalised coords (0..1): cursor_to [x, y]; focus [cx, cy, scale]. A page carries
+# {/* TODO video: <id> */} until the file exists, then a <video> tag (see CLAUDE.md).
+
+- id: sdk-embed-tour
+  mode: composed
+  output: assets/videos/sdk-embed-tour.webm
+  page: capabilities/overview.mdx
+  viewport: { width: 480, height: 1144 }    # matches the 720x1716 widget stills exactly (contain would letterbox otherwise)
+  beats:
+    # cursor_to / focus are normalised to the 720x1716 widget stills:
+    #   "12 Cited Sources" pill  y~1053/1716 = 0.61      suggestion chip y~1306/1716 = 0.76
+    - { image: assets/images/sdk/chat-hero.png, caption: "Libra answers inside your product", focus: [0.5, 0.40, 1.0], move_ms: 600, dwell_ms: 2600 }
+    - { image: assets/images/sdk/chat-hero.png, caption: "Every claim carries its source", cursor_to: [0.30, 0.61], focus: [0.5, 0.58, 1.08], move_ms: 800, dwell_ms: 2600 }
+    - { image: assets/images/sdk/suggestion-chip.png, caption: "The document on screen is one click from the chat", cursor_to: [0.34, 0.76], focus: [0.5, 0.74, 1.08], move_ms: 800, dwell_ms: 2500 }
+    - { image: assets/images/sdk/locale-de.png, caption: "Fourteen locales, switched without losing the conversation", focus: [0.5, 0.40, 1.0], move_ms: 700, dwell_ms: 2500 }
+
+- id: sdk-hero
+  mode: live
+  output: assets/videos/sdk-hero.webm
+  page: index.mdx
+  url: /playground.html
+  auth: true
+  viewport: { width: 1280, height: 800 }
+  ready: '#chat-textarea'                    # authenticated chat mounted (never the splash)
+  expect: '.cited-sources-button'            # a COMPLETED, cited answer — not a mid-stream frame
+  playback_speed: 4                          # research takes ~1-2 min in real time
+  steps:
+    - { caption: "One script, one init(), one attach() — Libra inside your product", wait_ms: 2000 }
+    - { caption: "Ask a legal question against your product's own sources", click: '#chat-textarea' }
+    - { fill: { selector: '#chat-textarea', text: 'Welche Kündigungsfristen gelten für Arbeitgeber nach § 622 BGB?' }, dwell_ms: 1200 }
+    - { press: { selector: '#chat-textarea', key: 'Enter' } }
+    - { caption: "Libra researches Wolters Kluwer Online and answers with citations", wait_for: '.cited-sources-button', timeout: 240000, dwell_ms: 3000 }
+    - { caption: "Every source is one click away", wait_for: 'button:has-text("Regenerate")', timeout: 60000, dwell_ms: 2500 }

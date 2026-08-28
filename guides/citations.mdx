@@ -1,0 +1,50 @@
+---
+title: "Citation clicks"
+description: "Open cited sources inside your own platform instead of a new tab"
+---
+
+The assistant's answers contain citations: to research-source results (Wolters Kluwer, Legal Intelligence, web search, EUR-Lex, …) and to host-supplied external documents. By default, clicking a citation opens its URL in a new tab.
+
+Provide `onCitationClick` in `Libra.init()` to handle navigation in-place. It fires for **every** citation that resolves to a research source. The SDK still opens the citation in a new tab by default; call `event.preventDefault()` to claim the ones you want to handle yourself. You don't need to open the rest; just leave them alone:
+
+```javascript
+Libra.init({
+  productId: 'one_it',
+  onCitationClick: (event) => {
+    // event.data.source is the research source, e.g. 'one_it_legale'.
+    if (!event.data.source.startsWith('one_it')) return; // not ours — SDK opens it in a new tab
+    event.preventDefault();             // we'll handle this one
+    openInMyPlatform(event.data.url);   // scroll to event.data.content
+  }
+});
+```
+
+## The event
+
+- **`data`**: the clicked citation.
+  - **`source`**: the canonical `ResearchSourceId` that owns the citation, e.g. `'wko_de'`. Covers both research-source results and host-supplied external documents (see [Document suggestions](/guides/document-suggestions)).
+  - **`url`**: the navigation target. May include a `documentAnchor` query parameter for scroll-to-section.
+  - **`content`**: the extracted text of the cited passage. **Present** when the user clicked the citation badge or "To source" in the tooltip (a specific passage); **absent** when they clicked "View source" in the citation list (the full document).
+- **`preventDefault()`**: call it to stop the SDK from opening `data.url` in a new tab, when you're handling navigation yourself.
+
+Citations that don't resolve to a research source never reach the callback and keep their default behaviour.
+
+<Note>
+The default open is restricted to `http(s)` URLs. The citation URL originates from model output, so the SDK blocks any other scheme — and a malformed URL — with a console warning before it could execute in your origin.
+</Note>
+
+<Warning>
+**Call `preventDefault()` before you navigate, not after.** If your handler throws, the SDK still performs its default new-tab open unless `preventDefault()` was already called. Claim the citation first, then do the work that might fail.
+</Warning>
+
+## What the widget cannot open
+
+The embedded widget ships **no document viewer**. Citations into *user-uploaded* documents therefore expose no "To source" or "View source" control at all, and generated Word documents offer download only, with no in-widget preview. Citations into research sources and host-supplied external documents — the ones that reach `onCitationClick` — are unaffected. This is a deliberate difference from the Libra web app, so a behaviour you see there may simply not exist inside the iframe.
+
+## Patterns
+
+**Own only your sources.** Compare `event.data.source` against the sources your product hosts (see [Products and sources](/capabilities/products-and-sources)) and leave everything else to the default. Users still reach external sources; you avoid rendering documents you don't have.
+
+**Scroll to the passage.** When `content` is present, search for it in your document view after navigating to `url`; it is the exact cited text. When it is absent, the user asked for the whole document.
+
+**Round-trip back to the chat.** If the user leaves your document view and wants the conversation back, the [chat handoff](/guides/chat-handoff) guide covers reopening a chat by ID.

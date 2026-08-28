@@ -1,0 +1,36 @@
+---
+title: "Chat handoff"
+description: "Reopen a cited chat from your product, and how users move between the widget and the main Libra app"
+---
+
+## Reopening a chat by ID
+
+`Libra.openChatById(chatId)` opens an existing Libra chat in an attached SDK session. For main-app citation links, the product owns extracting `libraChatId` from the URL, attaching the SDK, and cleaning up the URL if needed:
+
+```javascript
+const chatId = new URL(window.location.href).searchParams.get('libraChatId');
+
+await Libra.attach('chat');
+
+if (chatId) {
+  await Libra.openChatById(chatId);
+}
+```
+
+Call `openChatById()` after `Libra.attach()`; it logs and does nothing when there is no active SDK session.
+
+The typical loop: a user working in the main Libra app cites one of your documents; the citation link lands on your product page with `?libraChatId=…`; your page attaches the widget and reopens that conversation next to the document.
+
+## Handoffs into the main Libra app
+
+Some actions open the main Libra workspace in a new tab rather than running inside the iframe: **Continue in Libra**, account settings and team management, "Connect your account" and "More about this source" links, and licence management for publisher modules. The `baseUrl` option (default `https://app.libratech.ai`) is where those links point, and is also the origin of the auth popup. In [proxy mode](/guides/proxy-mode) `baseUrl` still serves this purpose even though API traffic goes through your BFF.
+
+When a user follows such a link and has to sign in or sign up first, they are returned to the page they asked for, and the research sources selected in the widget are carried over.
+
+<Note>
+For integrations that must keep users inside the product, Libra can enable the `sdk_only_access` flag for your product: the **Continue in Libra** button is hidden and other redirects are blocked with a notice. Ask your Libra contact; this is configured per integration, not by the host page.
+</Note>
+
+## Session persistence
+
+The last active chat is restored after page reloads and navigation in multi-page apps, and across `detach()` / `attach()` in single-page apps. Research-source selection is preserved when a chat is restored from history or after a host page reload.

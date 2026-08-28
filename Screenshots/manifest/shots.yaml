@@ -1,0 +1,113 @@
+# Screenshot manifest. `npm run capture -- --id <id>` (or --all) captures against the staging
+# playground. Selectors resolve INSIDE the SDK iframe; prefix `host:` for playground/host-page
+# elements. `auth: true` shots need auth/storageState.json (npm run auth) and are skipped without it.
+#
+# Convention: output → assets/images/sdk/<subject>-<state>.png, referenced by `page` either as
+# <img src="/assets/images/sdk/…"> or, until captured, {/* TODO screenshot: <id> */}.
+# `npm run validate` enforces the reference. Eyeball every new PNG — a wrong selector yields a
+# wrong picture, not an error. Never ship a splash, spinner or empty state as a result shot.
+#
+# Real SDK selectors (probed 2026-08-27, no data-testids in the build):
+#   #chat-textarea  #sdk-close-button  #sdk-menu-button  #sdk-new-chat-button
+#   #tools-dropdown-button  #research-button-open-dropdown  #chat-thinking-mode-button
+#   .cited-sources-button  .citation-badge-name   body.libra-sdk-has-header
+#
+# ORDER MATTERS. `locale-de` calls Libra.setLocale('de-DE'), which the SDK persists to
+# localStorage in the shared browser context — every auth shot that ran after it came out
+# in German. It is therefore LAST, and `chat-hero` (the session it chains from) is
+# second-to-last. Do not reorder without re-checking every PNG.
+
+- id: auth-screen
+  output: assets/images/sdk/auth-screen.png
+  page: guides/authentication.mdx
+  description: The widget before sign-in — Sign in / Create account.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: false
+  capture: { mode: locator, locator: 'host:[data-libra-sdk]' }
+
+# The hero: a real, completed, cited answer — never the empty "How can Libra help you?" state.
+
+- id: suggestion-chip
+  output: assets/images/sdk/suggestion-chip.png
+  page: guides/document-suggestions.mdx
+  description: The "+ [title]" document suggestion chip above the composer, after the availability check.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: true
+  actions:
+    - { wait_for: '#chat-textarea', timeout: 60000 }
+    - { click: 'host:#set-suggestion' }
+    - { wait_timeout: 4000 }          # background availability check against the FAB index
+  capture: { mode: locator, locator: 'host:[data-libra-sdk]' }
+
+- id: header-without-onclose
+  output: assets/images/sdk/header-without-onclose.png
+  page: guides/embedding.mdx
+  description: Re-initialised without onClose — no Libra headbar, the host owns the chrome.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: true
+  actions:
+    - { wait_for: '#chat-textarea', timeout: 60000 }
+    - { click: 'host:#provide-on-close' }             # destroy() + init() without onClose, then re-attach
+    - { wait_for: '#chat-textarea', timeout: 60000 }  # the NEW iframe's composer
+    - { wait_timeout: 1500 }
+  capture: { mode: locator, locator: 'host:[data-libra-sdk]' }
+
+- id: host-overlay
+  output: assets/images/sdk/host-overlay.png
+  page: guides/embedding.mdx
+  description: A host overlay at z-index 12 covering the widget mounted at zIndex 5 inside #root.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: true
+  actions:
+    - { wait_for: '#chat-textarea', timeout: 60000 }
+    - { click: 'host:#open-overlay' }
+    - { wait_for: 'host:#host-overlay.is-open' }
+    - { wait_timeout: 600 }
+  capture: { mode: page }
+
+- id: playground-overview
+  output: assets/images/sdk/playground-overview.png
+  page: getting-started/playground.mdx
+  description: The staging playground — host controls on the left, the widget attached over #chat on the right.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: true
+  actions:
+    - { wait_for: '#chat-textarea', timeout: 60000 }
+    - { wait_timeout: 1000 }
+  capture: { mode: page }
+
+- id: chat-hero
+  output: assets/images/sdk/chat-hero.png
+  page: capabilities/overview.mdx
+  description: Answered conversation with § 622 BGB citation badges and the "6 Cited Sources" pill.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: true
+  actions:
+    - { wait_for: '#chat-textarea', timeout: 60000 }
+    - { fill: '#chat-textarea', text: 'Welche Kündigungsfristen gelten für Arbeitgeber nach § 622 BGB?' }
+    - { press: '#chat-textarea', key: 'Enter' }
+    - { wait_for: '.cited-sources-button', timeout: 240000 }   # research + streaming
+    - { wait_for: 'button:has-text("Regenerate")', timeout: 60000 }  # only rendered once complete
+    - { wait_timeout: 2500 }
+  capture: { mode: locator, locator: 'host:[data-libra-sdk]' }
+
+# Chained off chat-hero: same conversation, German UI — proves setLocale preserves the session.
+
+- id: locale-de
+  output: assets/images/sdk/locale-de.png
+  page: guides/locales.mdx
+  description: The same answered session after Libra.setLocale('de-DE') — UI translated, chat intact.
+  viewport: { width: 1440, height: 900 }
+  url: /playground.html
+  auth: true
+  chain: true
+  actions:
+    - { select: 'host:#set-locale', option: 'de-DE' }
+    - { wait_timeout: 2500 }
+  capture: { mode: locator, locator: 'host:[data-libra-sdk]' }
