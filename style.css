@@ -1,0 +1,26 @@
+/* Sidebar: move the footer, which holds only the version switcher, to the very top. */
+#sidebar > ul {
+  order: -1;
+  border-top: 0;
+  padding: 1.5rem 1.75rem 0;
+}
+
+/* Sidebar: nested groups are always expanded, so show them as plain labels. */
+#sidebar li[data-group-tag] > button {
+  pointer-events: none;
+  cursor: default;
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgb(107 114 128);
+}
+
+#sidebar li[data-group-tag] > button svg {
+  display: none;
+}
+
+.dark #sidebar li[data-group-tag] > button {
+  color: rgb(156 163 175);
+}

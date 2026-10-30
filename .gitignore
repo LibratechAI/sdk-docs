@@ -4,3 +4,5 @@
 .claude/worktrees/
 .claude/settings.local.json
 # capture harness has its own .gitignore (node_modules, auth session, scratch)
+# Large source documents stay outside the repo.
+references/*.pdf

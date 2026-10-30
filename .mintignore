@@ -7,3 +7,13 @@ LICENSE
 scripts/
 Screenshots/
 .claude/
+
+# Internal handover notes, agent instructions, planning specs, and source references
+HANDOVER.md
+AGENTS.md
+specs/
+references/
+
+# Tooling and review artifacts that aren't reader pages
+generated/
+assets-pipeline/
