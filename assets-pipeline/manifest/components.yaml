@@ -1,0 +1,706 @@
+# Component capture manifest.
+#
+# Each entry maps one SDK playground UI state to a docs image. `selector`
+# should prefer [data-testid=...], then role/text - CSS classes and XPath
+# are banned (they break silently when the playground UI changes).
+#
+# id:        globally-unique, referenced by `npm run capture -- --ids <id>`
+# route:     path under SDK_PLAYGROUND_URL, e.g. /playground.html?demo=widget
+# viewport:  optional {width, height}; defaults to 1440x900 (captured at 2x)
+# sidebarWidth: optional; defaults to 460 so "Continue in Libra" keeps its label.
+#            Override only to show responsive behavior.
+# video:     true to record an .mp4 instead of a screenshot
+# actions:   ordered list of {frame|click|clickPopup|clickLast|fill|select|press|hover|waitFor|waitForHidden|wait|scrollTo|clipStart}
+#            press: {selector, key} focuses an element and presses a key (some
+#            menus only open from the keyboard in headless Chromium).
+# selector:  element to screenshot, or "viewport" for the whole screen. Use
+#            "viewport" whenever the SDK opens UI outside its sidebar.
+# frame:     optional iframe selector for actions or screenshot scope.
+#            `frame: popup` targets the window opened by a clickPopup action.
+# readOnly:  answer every non-GET API call locally so nothing is saved or sent
+# apiResponses: replace whole GET responses by path (apiOverrides merges fields)
+# signedOut: true to capture without the saved session (sign-in screens)
+# fakeMic:   WAV file (relative to assets-pipeline/) played as the microphone,
+#            for voice input. Transcription is real; nothing is sent to chat.
+# annotations: optional ordered list of {selector, frame?, at?} controls to number.
+#            Capture measures their positions into snippets/screenshot-markers.jsx;
+#            pages show the numbers with the AnnotatedImage component. `at` is
+#            top-right (default) or top-left (on the element), or below,
+#            above, left, or right (beside it, so text stays readable).
+#            dx/dy (px) nudge a marker into empty space. `frame: page` numbers
+#            host-page elements (the playground controls) instead of SDK ones.
+# output:    path (relative to repo root) the docs page references
+# page:      the .mdx page this asset belongs to (for validate/orphan checks)
+#
+# /playground-2.html is used because its host area has no harness controls.
+# Only the Playground page shows /playground.html with its controls.
+# Captures use the "Demo Project" seeded from demo-content/ (see README).
+
+# The SDK release the published docs describe. `capture --target release`
+# loads /versions/v<sdkVersion>/ and refuses assets from any other SDK build.
+# captures.json records the build each asset came from.
+sdkVersion: 0.15.1
+
+# Fields merged into the signed-in user the SDK loads (GET /api/v1/auths/)
+# during captures, so screenshots show a generic person. The account is not
+# changed. A component can add its own `sessionUser` to mock account states.
+sessionUser:
+  name: John Doe
+  first_name: John
+  last_name: Doe
+  email: john.doe@example.com
+
+# Fields merged into other API responses (by path) during captures, so no real
+# colleague's name or email appears. Components can add their own entries.
+apiOverrides:
+  /api/v1/teams/owner:
+    name: Jane Smith
+    email: jane.smith@example.com
+
+# SDK init options the playground loads from localStorage before each capture.
+# Rule: show a Wolters Kluwer research source, not web search, unless the
+# example needs another source (override `playgroundConfig` on the component).
+playgroundConfig:
+  researchSources: [wko_de]
+
+components:
+  - id: sdk-file-picker-project
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - waitFor: 'button[aria-label="Tools"]'
+      - click: 'button[aria-label="Tools"]'
+      - click: 'button:has-text("Select files")'
+      - waitFor: 'text=Sort by'
+      - click: 'text="Recents"'
+      - clickLast: 'text="Demo Project"'
+      - click: 'text="Chat uploads"'
+      - waitFor: 'text="Share Purchase Agreement - Draft 2"'
+      - wait: 2000
+    selector: iframe
+    output: images/capabilities/file-picker-project.png
+    page: capabilities/files-and-tools.mdx
+
+  - id: sdk-document-viewer-citation
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      # Switching projects resets the chat; let it settle before opening history.
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Review")'
+      - waitFor: 'text=Share Purchase ...'
+      # Follow-up suggestions load late and auto-scroll the chat to the bottom.
+      - wait: 8000
+      - scrollTo: 'text=Share Purchase ...'
+      - click: 'text=Share Purchase ...'
+      - frame: 'iframe >> nth=1'
+      - waitFor: 'text=Translate'
+      - waitFor: 'text=thirty per cent'
+      - frame: 'iframe >> nth=0'
+      - scrollTo: 'text=Share Purchase ...'
+      - wait: 2000
+    selector: viewport
+    output: images/capabilities/document-viewer-live.png
+    page: capabilities/document-viewer.mdx
+
+  - id: sdk-document-viewer-flow
+    route: /playground-2.html
+    video: true
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      # Switching projects resets the chat; let it settle before opening history.
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Review")'
+      - waitFor: 'text=Share Purchase ...'
+      - wait: 8000
+      - scrollTo: 'text=Share Purchase ...'
+      - wait: 1000
+      - clipStart: true
+      - wait: 1000
+      - click: 'text=Share Purchase ...'
+      - frame: 'iframe >> nth=1'
+      - waitFor: 'text=thirty per cent'
+      - wait: 3500
+    output: videos/capabilities/document-viewer-flow.mp4
+    page: capabilities/document-viewer.mdx
+
+  - id: sdk-home
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+    annotations:
+      - selector: '#sdk-close-button'
+      - selector: '#sdk-menu-button'
+      - selector: '#sdk-project-selector-button'
+      - selector: '#sdk-chat-history-button'
+      - selector: '#sdk-new-chat-button'
+      - selector: '#sdk-continue-button'
+    selector: iframe
+    output: images/capabilities/sdk-home.png
+    page: capabilities/sdk-window.mdx
+
+  - id: sdk-layout
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+    annotations:
+      - selector: '#sdk-headbar svg'
+        at: right
+        dx: 14
+      - selector: '#sdk-close-button'
+      - selector: '#sdk-menu-button'
+      - selector: '#sdk-project-selector-button'
+      - selector: '#sdk-chat-history-button'
+      - selector: '#sdk-new-chat-button'
+      - selector: '#sdk-continue-button'
+      - selector: 'text=How can Libra help you?'
+        at: left
+      - selector: '#chat-textarea'
+        at: left
+      - selector: 'button[aria-label="Improve"]'
+      - selector: '#tools-dropdown-button'
+      - selector: '#research-button-open-dropdown'
+      - selector: '#chat-thinking-mode-button'
+      - selector: '#chat-mic-button'
+      - selector: '#send-prompt-button'
+      - selector: 'text=AI output may contain'
+        at: top-left
+        dx: 24
+        dy: 30
+    selector: iframe
+    output: images/capabilities/sdk-layout.png
+    page: capabilities/overview.mdx
+
+  - id: sdk-tools-menu
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - click: '#tools-dropdown-button'
+      - waitFor: 'text="Upload files from computer"'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/tools-menu.png
+    page: capabilities/files-and-tools.mdx
+
+  - id: sdk-create-new-menu
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - click: '#tools-dropdown-button'
+      - click: 'button:has-text("Create new")'
+      - waitFor: 'text="Draft document"'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/tools-create-new.png
+    page: capabilities/files-and-tools.mdx
+
+  - id: sdk-research-sources
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - press: { selector: '#research-button-open-dropdown', key: Enter }
+      - waitFor: 'text="View all Libra integrations"'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/research-sources.png
+    page: capabilities/research-sources-and-citations.mdx
+
+  - id: sdk-model-tier
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - click: '#chat-thinking-mode-button'
+      - waitFor: 'text="Deep Thinking"'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/model-tier.png
+    page: capabilities/chat-and-answers.mdx
+
+  - id: sdk-voice-recording
+    route: /playground-2.html
+    fakeMic: fixtures/voice-prompt.wav
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - click: '#chat-mic-button'
+      - waitFor: 'button[aria-label="Confirm recording"]'
+      # Mid-sentence, so the waveform shows speech.
+      - wait: 2000
+    selector: iframe
+    output: images/capabilities/voice-recording.png
+    page: capabilities/chat-and-answers.mdx
+
+  - id: sdk-voice-transcribed
+    route: /playground-2.html
+    fakeMic: fixtures/voice-prompt.wav
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - click: '#chat-mic-button'
+      - waitFor: 'button[aria-label="Confirm recording"]'
+      # The fixture is 3 s of speech, then silence; the fake mic loops it.
+      - wait: 5000
+      - click: 'button[aria-label="Confirm recording"]'
+      - waitFor: '#chat-mic-button'
+      # Move the pointer off the Send button so its tooltip stays hidden.
+      - hover: 'text=How can Libra help you?'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/voice-transcribed.png
+    page: capabilities/chat-and-answers.mdx
+
+  # Uses the "German Employer Notice Periods" chat in the Demo Project, answered
+  # from Wolters Kluwer Online (wko_de).
+  - id: sdk-citation-preview
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("German Employer Notice Periods")'
+      - waitFor: 'button[aria-label="Regenerate"]'
+      # Follow-up suggestions load late and auto-scroll the chat to the bottom.
+      - wait: 8000
+      - scrollTo: '.citation-badge >> nth=0'
+      - hover: '.citation-badge >> nth=0'
+      - waitFor: 'button:has-text("To source")'
+      - wait: 800
+    annotations:
+      - selector: '.citation-badge >> nth=0'
+        at: top-left
+      - selector: 'button:has-text("Citation list")'
+        at: above
+      - selector: 'button:has-text("To source")'
+        at: above
+    selector: iframe
+    output: images/capabilities/citation-preview.png
+    page: capabilities/citation-navigation.mdx
+
+  - id: sdk-context-picker
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 1500
+      - fill: { selector: '#chat-textarea', value: '@' }
+      - waitFor: 'text="Chat uploads"'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/context-picker.png
+    page: capabilities/files-and-tools.mdx
+
+  - id: sdk-answer-actions
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Review")'
+      - waitFor: 'button[aria-label="Regenerate"]'
+      - wait: 8000
+      - scrollTo: 'button[aria-label="Regenerate"]'
+      - wait: 1000
+    annotations:
+      - selector: 'button[aria-label="Copy"] >> nth=-1'
+        at: below
+      - selector: 'button[aria-label="Regenerate"]'
+        at: below
+      - selector: 'button[aria-label="Export"]'
+        at: below
+      - selector: 'button[aria-label="Create email"]'
+        at: below
+      - selector: 'button[aria-label="Open in editor"]'
+        at: below
+    selector: iframe
+    output: images/capabilities/answer-actions.png
+    page: capabilities/chat-and-answers.mdx
+
+  - id: sdk-export-menu
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Review")'
+      - waitFor: 'button[aria-label="Regenerate"]'
+      - wait: 8000
+      - scrollTo: 'button[aria-label="Regenerate"]'
+      - click: 'button[aria-label="Export"]'
+      - wait: 1200
+    selector: iframe
+    output: images/capabilities/export-menu.png
+    page: capabilities/chat-and-answers.mdx
+
+  - id: sdk-citation-list
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Review")'
+      - waitFor: '[data-testid="cited-sources-button"]'
+      - wait: 8000
+      - click: '[data-testid="cited-sources-button"]'
+      - waitFor: 'text="Citation list"'
+      - wait: 800
+    selector: iframe
+    output: images/capabilities/citation-list.png
+    page: capabilities/research-sources-and-citations.mdx
+
+  # "Liability Cap Side Letter" was seeded with Tools > Create new > Draft document.
+  - id: sdk-generated-document
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Side Letter")'
+      - waitFor: 'button:has-text("Preview")'
+      - wait: 8000
+      - scrollTo: 'button:has-text("Preview")'
+      - wait: 1000
+    selector: iframe
+    output: images/capabilities/generated-document.png
+    page: capabilities/document-viewer.mdx
+
+  - id: sdk-generated-document-preview
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Side Letter")'
+      - waitFor: 'button:has-text("Preview")'
+      - wait: 8000
+      - scrollTo: 'button:has-text("Preview")'
+      - click: 'button:has-text("Preview")'
+      - frame: 'iframe >> nth=1'
+      - waitFor: 'text=Edit'
+      - wait: 10000
+      - frame: 'iframe >> nth=0'
+      - scrollTo: 'button:has-text("Preview")'
+      - wait: 1000
+    selector: viewport
+    output: images/capabilities/generated-document-preview.png
+    page: capabilities/document-viewer.mdx
+
+  - id: sdk-chat-history
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - waitFor: 'a:has-text("Liability Cap Review")'
+      - wait: 1000
+    selector: iframe
+    output: images/capabilities/chat-history.png
+    page: capabilities/assistants-history-projects.mdx
+
+  - id: sdk-projects
+    route: /playground-2.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - waitFor: 'text="New project"'
+      # Filter to the Demo Project so team projects and colleague names stay out.
+      - fill: { selector: 'input[placeholder="Search projects"]', value: 'Demo' }
+      - wait: 1500
+    selector: iframe
+    output: images/capabilities/projects.png
+    page: capabilities/assistants-history-projects.mdx
+
+  # playground.html has test controls; only the SDK iframe is captured, so they stay out.
+  - id: sdk-suggestion
+    route: /playground.html
+    actions:
+      - frame: iframe
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+      - frame: page
+      - click: '#set-suggestion'
+      - frame: iframe
+      - waitFor: 'button:has-text("Amtsgericht")'
+      - wait: 1500
+    selector: iframe
+    output: images/capabilities/suggestion.png
+    page: capabilities/current-document.mdx
+
+  - id: sdk-suggestion-attached
+    route: /playground.html
+    actions:
+      - frame: iframe
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+      - frame: page
+      - click: '#set-suggestion'
+      - frame: iframe
+      - click: 'button:has-text("Amtsgericht")'
+      - waitFor: 'text=Clear all'
+      # Move the pointer off the chip so its tooltip closes.
+      - hover: 'text=How can Libra help you?'
+      - wait: 3000
+    selector: iframe
+    output: images/capabilities/suggestion-attached.png
+    page: capabilities/current-document.mdx
+
+  - id: sdk-window-narrow
+    route: /playground-2.html
+    sidebarWidth: 360
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+    selector: iframe
+    output: images/capabilities/sdk-window-narrow.png
+    page: capabilities/sdk-window.mdx
+
+  - id: sdk-playground-overview
+    route: /playground.html
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+    annotations:
+      - selector: 'span:has(#meta-product)'
+        frame: page
+        at: right
+        dx: 10
+      - selector: 'summary:has-text("Lifecycle")'
+        frame: page
+      - selector: 'summary:has-text("Attachments")'
+        frame: page
+      - selector: 'summary:has-text("Chat & locale")'
+        frame: page
+      - selector: 'summary:has-text("Host layout")'
+        frame: page
+      - selector: 'summary:has-text("Init config")'
+        frame: page
+      - selector: '#intercept-citations'
+        frame: page
+        at: left
+        dx: -12
+      - selector: 'text="Events"'
+        frame: page
+        at: right
+        dx: 20
+      - selector: '#sdk-headbar svg'
+        at: right
+        dx: 14
+    selector: viewport
+    output: images/playground/overview.png
+    page: integration/playground.mdx
+
+  # A narrow browser window leaves no room beside the SDK, so the viewer covers it.
+  - id: sdk-document-viewer-overlay
+    route: /playground-2.html
+    viewport: { width: 600, height: 860 }
+    actions:
+      - frame: iframe
+      - click: '#sdk-project-selector-button'
+      - click: '#project-selector >> text="Demo Project"'
+      - waitForHidden: 'text="New project"'
+      - wait: 2000
+      - click: 'button[aria-label="Chat History"]'
+      - click: 'a:has-text("Liability Cap Review")'
+      - waitFor: 'text=Share Purchase ...'
+      - wait: 8000
+      - scrollTo: 'text=Share Purchase ...'
+      - click: 'text=Share Purchase ...'
+      - frame: 'iframe >> nth=1'
+      - waitFor: 'text=thirty per cent'
+      - wait: 2000
+    selector: viewport
+    output: images/capabilities/document-viewer-overlay.png
+    page: capabilities/document-viewer.mdx
+
+  - id: sdk-sign-in
+    route: /playground-2.html
+    signedOut: true
+    actions:
+      - frame: iframe
+      - waitFor: 'button:has-text("Sign in")'
+      - wait: 2000
+    selector: iframe
+    output: images/capabilities/sign-in.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  - id: sdk-sign-in-popup
+    route: /playground-2.html
+    signedOut: true
+    actions:
+      - frame: iframe
+      - waitFor: 'button:has-text("Sign in")'
+      - wait: 1500
+      - clickPopup: 'button:has-text("Sign in")'
+      - frame: popup
+      - waitFor: 'button:has-text("Continue")'
+      - wait: 1500
+    frame: popup
+    selector: viewport
+    output: images/capabilities/sign-in-popup.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  - id: sdk-create-account-popup
+    route: /playground-2.html
+    signedOut: true
+    actions:
+      - frame: iframe
+      - waitFor: 'button:has-text("Start free trial")'
+      - wait: 1500
+      - clickPopup: 'button:has-text("Start free trial")'
+      - frame: popup
+      - waitFor: 'button:has-text("Continue")'
+      - wait: 1500
+    frame: popup
+    selector: viewport
+    output: images/capabilities/create-account-popup.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  # Mocked account states: sessionUser rewrites the signed-in user only in the
+  # capture browser. The account itself is unchanged.
+  - id: sdk-onboarding
+    route: /playground-2.html
+    sessionUser:
+      created_at: 1767225600
+      first_name: John
+      last_name: Doe
+      position: null
+      organization_size: null
+      referral_source: null
+      verified: false
+    actions:
+      - frame: iframe
+      - waitFor: 'text=Tell us a bit about yourself'
+      - wait: 2500
+    selector: iframe
+    output: images/capabilities/onboarding.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  - id: sdk-subscription-ended
+    route: /playground-2.html
+    sessionUser:
+      role: user
+      team: { subscription_status: canceled }
+    actions:
+      - frame: iframe
+      - waitFor: 'button'
+      - wait: 4000
+    selector: iframe
+    output: images/capabilities/subscription-ended.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  - id: sdk-account-deactivated
+    route: /playground-2.html
+    sessionUser:
+      role: pending
+    actions:
+      - frame: iframe
+      - waitFor: 'text=Account Deactivated'
+      - waitFor: 'text=Jane Smith'
+      - wait: 2000
+    selector: iframe
+    output: images/capabilities/account-deactivated.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  - id: sdk-account-blocked
+    route: /playground-2.html
+    readOnly: true
+    sessionUser:
+      role: user
+      team: { subscription_status: inactive }
+    actions:
+      - frame: iframe
+      - waitFor: 'button'
+      - wait: 4000
+    selector: iframe
+    output: images/capabilities/account-blocked.png
+    page: capabilities/sign-in-and-onboarding.mdx
+
+  - id: sdk-language-de
+    route: /playground.html
+    actions:
+      - frame: iframe
+      - waitFor: '#chat-textarea'
+      - wait: 2000
+      - frame: page
+      - click: 'text="Chat & locale"'
+      - select: { selector: '#set-locale', value: de-DE }
+      - wait: 3000
+    selector: iframe
+    output: images/capabilities/language-de.png
+    page: capabilities/language.mdx
+
+# The Figma File Viewer frame is reference context, not a substitute for the
+# current staging capture above.

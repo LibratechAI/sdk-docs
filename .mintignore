@@ -1,12 +1,10 @@
-# Excluded from the published Mintlify build. Anything not listed is fetchable
-# by URL even when unlinked (Mintlify also auto-ignores .git .github .claude
-# node_modules README.md LICENSE.md CHANGELOG.md — kept explicit anyway).
-CLAUDE.md
-README.md
-LICENSE
-scripts/
-Screenshots/
-.claude/
+# Mintlify automatically ignores these files and directories:
+# .git, .github, .claude, .agents, .idea, node_modules,
+# README.md, LICENSE.md, CHANGELOG.md, CONTRIBUTING.md
+
+# Draft content
+drafts/
+*.draft.mdx
 
 # Internal handover notes, agent instructions, planning specs, and source references
 HANDOVER.md
@@ -17,3 +15,4 @@ references/
 # Tooling and review artifacts that aren't reader pages
 generated/
 assets-pipeline/
+scripts/

@@ -1,0 +1,233 @@
+{
+  "sdk-file-picker-project": {
+    "output": "images/capabilities/file-picker-project.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:11:14.084Z"
+  },
+  "sdk-document-viewer-citation": {
+    "output": "images/capabilities/document-viewer-live.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:11:32.558Z"
+  },
+  "sdk-document-viewer-flow": {
+    "output": "videos/capabilities/document-viewer-flow.mp4",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:12:01.513Z"
+  },
+  "sdk-home": {
+    "output": "images/capabilities/sdk-home.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:54:12.892Z"
+  },
+  "sdk-tools-menu": {
+    "output": "images/capabilities/tools-menu.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:12:15.692Z"
+  },
+  "sdk-create-new-menu": {
+    "output": "images/capabilities/tools-create-new.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:12:23.509Z"
+  },
+  "sdk-research-sources": {
+    "output": "images/capabilities/research-sources.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:12:31.984Z"
+  },
+  "sdk-model-tier": {
+    "output": "images/capabilities/model-tier.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:12:38.895Z"
+  },
+  "sdk-context-picker": {
+    "output": "images/capabilities/context-picker.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:12:45.320Z"
+  },
+  "sdk-answer-actions": {
+    "output": "images/capabilities/answer-actions.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:27:42.116Z"
+  },
+  "sdk-export-menu": {
+    "output": "images/capabilities/export-menu.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:13:18.115Z"
+  },
+  "sdk-citation-list": {
+    "output": "images/capabilities/citation-list.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:13:33.897Z"
+  },
+  "sdk-generated-document": {
+    "output": "images/capabilities/generated-document.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:13:49.550Z"
+  },
+  "sdk-generated-document-preview": {
+    "output": "images/capabilities/generated-document-preview.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T15:14:16.390Z"
+  },
+  "sdk-layout": {
+    "output": "images/capabilities/sdk-layout.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:25:42.678Z"
+  },
+  "sdk-chat-history": {
+    "output": "images/capabilities/chat-history.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:35:03.254Z"
+  },
+  "sdk-projects": {
+    "output": "images/capabilities/projects.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:36:11.517Z"
+  },
+  "sdk-suggestion": {
+    "output": "images/capabilities/suggestion.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:40:09.388Z"
+  },
+  "sdk-suggestion-attached": {
+    "output": "images/capabilities/suggestion-attached.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:40:20.604Z"
+  },
+  "sdk-window-narrow": {
+    "output": "images/capabilities/sdk-window-narrow.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:41:26.377Z"
+  },
+  "sdk-document-viewer-overlay": {
+    "output": "images/capabilities/document-viewer-overlay.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:44:03.475Z"
+  },
+  "sdk-sign-in": {
+    "output": "images/capabilities/sign-in.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:42:21.271Z"
+  },
+  "sdk-language-de": {
+    "output": "images/capabilities/language-de.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:43:23.079Z"
+  },
+  "sdk-onboarding": {
+    "output": "images/capabilities/onboarding.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:48:47.932Z"
+  },
+  "sdk-subscription-ended": {
+    "output": "images/capabilities/subscription-ended.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:48:53.728Z"
+  },
+  "sdk-account-deactivated": {
+    "output": "images/capabilities/account-deactivated.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T16:54:17.590Z"
+  },
+  "sdk-sign-in-popup": {
+    "output": "images/capabilities/sign-in-popup.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T17:11:10.883Z"
+  },
+  "sdk-create-account-popup": {
+    "output": "images/capabilities/create-account-popup.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T17:11:17.990Z"
+  },
+  "sdk-account-blocked": {
+    "output": "images/capabilities/account-blocked.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T17:11:23.777Z"
+  },
+  "sdk-voice-recording": {
+    "output": "images/capabilities/voice-recording.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T17:39:32.180Z"
+  },
+  "sdk-voice-transcribed": {
+    "output": "images/capabilities/voice-transcribed.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T17:39:46.092Z"
+  },
+  "sdk-citation-preview": {
+    "output": "images/capabilities/citation-preview.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground-2.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T17:54:29.767Z"
+  },
+  "sdk-playground-overview": {
+    "output": "images/playground/overview.png",
+    "target": "release",
+    "url": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground.html",
+    "sdkVersion": "0.15.1",
+    "capturedAt": "2026-10-29T18:44:02.750Z"
+  }
+}

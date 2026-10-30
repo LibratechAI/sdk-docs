@@ -1,6 +1,0 @@
-node_modules/
-auth/storageState*.json
-auth/.env
-last-run.json
-.tmp/
-*.log

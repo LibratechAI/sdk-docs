@@ -1,0 +1,28 @@
+{
+  "name": "libra-sdk-doc-assets",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Playwright screenshot/video pipeline for the Libra SDK docs playground.",
+  "type": "module",
+  "scripts": {
+    "auth": "tsx src/cli.ts auth",
+    "capture": "tsx src/cli.ts capture",
+    "list": "tsx src/cli.ts list",
+    "validate": "tsx src/cli.ts validate",
+    "check:render": "tsx src/render-check.ts",
+    "compose:hero": "tsx src/compose-hero.ts",
+    "demo:files": "tsx demo-content/generate.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/node": "^22.10.0",
+    "commander": "^12.1.0",
+    "docx": "^9.14.0",
+    "dotenv": "^16.4.5",
+    "ffmpeg-static": "^5.3.0",
+    "sharp": "^0.35.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3",
+    "yaml": "^2.6.1"
+  }
+}
