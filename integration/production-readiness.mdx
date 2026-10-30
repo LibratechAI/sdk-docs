@@ -1,0 +1,42 @@
+---
+title: "Production readiness"
+description: "Review browser, security, proxy, and layout requirements before releasing a Libra integration."
+---
+
+Use this checklist during browser, security, and layout review. Record the SDK package/CDN version and the environment URL tested with each release.
+
+## Browser and security headers
+
+- [ ] The exact production SDK build boots under the host's production CSP.
+- [ ] `blob:` is allowed where required for the SDK-created frames and bundled assets.
+- [ ] Hashes or another reviewed policy authorize the SDK's inline bootstrap scripts without casually adding `unsafe-inline` to `script-src`.
+- [ ] The document viewer renders a PDF under the production policy.
+- [ ] `worker-src` permits the worker source required by the viewer, including `blob:` when the deployed build uses it.
+- [ ] Restrictive `frame-src` or equivalent rules do not block SDK-created blob frames.
+- [ ] Permissions Policy has been reviewed for the host product and tested with the integrated experience.
+
+## Origins and authentication
+
+- [ ] The production `baseUrl` is an approved Libra environment URL.
+- [ ] The production `proxy.url`, if used, belongs to the host deployment and passes origin review.
+- [ ] The BFF authenticates every request and validates product access and identity linking.
+- [ ] Libra JWTs, exchange credentials, and link secrets stay server-side.
+- [ ] Proxy failures, `401` responses, and identity-linking failures have an owner and recovery path.
+
+## Layout and browser behavior
+
+- [ ] The mount target exists before `init()` and remains in the DOM for the SDK lifetime.
+- [ ] The target has non-zero dimensions when attached at every supported breakpoint.
+- [ ] The target and its ancestors do not create a fixed-position containing block through the documented CSS properties.
+- [ ] Stacking is tested with the host's overlays and uses `isolation: isolate` where appropriate.
+- [ ] Scrolling, resizing, animations, modals, and document-viewer split/overlay states remain aligned.
+- [ ] Citation default navigation and host-owned citation navigation are both tested.
+
+## Evidence and ownership
+
+- [ ] The reviewed SDK version, source revision, environment, and browser matrix are recorded.
+- [ ] Browser console CSP, worker, frame, and origin errors are captured and triaged.
+- [ ] Host, BFF, Libra backend, and browser ownership is recorded for each failure mode.
+- [ ] The integration does not depend on internal iframe messages, blob URLs, frame selectors, or undocumented viewer protocols.
+
+See [deployment security](/integration/deployment-security), [trusted origins](/integration/trusted-origins), and [embedding and layout constraints](/integration/embedding-constraints) for the detailed checks.

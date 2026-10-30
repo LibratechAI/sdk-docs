@@ -1,0 +1,140 @@
+---
+title: "Quickstart"
+description: "Install or load the Libra SDK and attach it to a visible host container."
+---
+
+This Quickstart uses the reviewed release baseline `@libra/sdk` `0.15.1`. Production promotion status is separate and should be confirmed before publishing a production-specific version.
+
+## Prerequisites
+
+- A host web page where `document.body` is available.
+- A visible host-owned container with stable dimensions.
+- A valid Libra product identifier, such as `wko_de`.
+- WK Artifactory access for the npm path, or access to the WK CDN for the browser path.
+
+## Get started
+
+<Steps>
+  <Step title="Add the SDK">
+    <Tabs>
+      <Tab title="npm">
+        Add the Libra registry to the host project's `.npmrc`. Keep the token in the environment; do not commit it.
+
+        ```ini
+        @libra:registry=https://artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/
+        //artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/:_authToken=${ARTIFACTORY_TOKEN}
+        ```
+
+        Install the current staging baseline:
+
+        ```bash
+        npm install @libra/sdk@0.15.1
+        ```
+
+        The package includes an ES module for `import`, a UMD build for `require`, and TypeScript declarations. Locale bundles are imported separately; see [Locales](/integration/locales).
+      </Tab>
+      <Tab title="CDN: ES module">
+        Use the versioned ESM bundle in a module-supporting browser. There's nothing to install; you import it in step 3.
+
+        ```text
+        https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.1/libra.js
+        ```
+      </Tab>
+      <Tab title="CDN: classic script">
+        Use the UMD bundle when the host does not use JavaScript modules. Add the script tag to the page:
+
+        ```html
+        <script src="https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.1/libra.umd.js"></script>
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Add a container and an open control">
+    ```html
+    <button id="open-chat" type="button">Open Libra</button>
+    <div id="libra-panel" style="width: 400px; height: 600px;"></div>
+    ```
+  </Step>
+  <Step title="Initialize once, then attach when the user opens the panel">
+    <Tabs>
+      <Tab title="npm">
+        ```html
+        <script type="module">
+          import { Libra } from '@libra/sdk';
+
+          const openButton = document.getElementById('open-chat');
+          const panel = document.getElementById('libra-panel');
+
+          Libra.init({
+            productId: 'wko_de',
+            onClose: () => {
+              panel.hidden = true;
+              Libra.detach();
+            }
+          });
+
+          openButton.addEventListener('click', () => {
+            panel.hidden = false;
+            Libra.attach(panel);
+          });
+        </script>
+        ```
+      </Tab>
+      <Tab title="CDN: ES module">
+        ```html
+        <script type="module">
+          import { Libra } from 'https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.1/libra.js';
+
+          const panel = document.getElementById('libra-panel');
+
+          Libra.init({
+            productId: 'wko_de',
+            onClose: () => {
+              panel.hidden = true;
+              Libra.detach();
+            }
+          });
+
+          document.getElementById('open-chat').addEventListener('click', () => {
+            panel.hidden = false;
+            Libra.attach(panel);
+          });
+        </script>
+        ```
+      </Tab>
+      <Tab title="CDN: classic script">
+        Place this after the UMD script tag from step 1.
+
+        ```html
+        <script>
+          const { Libra } = window.Libra;
+          const panel = document.getElementById('libra-panel');
+
+          Libra.init({
+            productId: 'wko_de',
+            onClose: () => {
+              panel.hidden = true;
+              Libra.detach();
+            }
+          });
+
+          document.getElementById('open-chat').addEventListener('click', () => {
+            panel.hidden = false;
+            Libra.attach(panel);
+          });
+        </script>
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+  <Step title="Open and close the panel">
+    Select **Open Libra**. `Libra.attach()` positions the SDK over the target. `Libra.detach()` hides it while preserving the session for the next attach.
+  </Step>
+</Steps>
+
+## Next steps
+
+- Read the [Integration guide](/integration/overview) for the host responsibilities.
+- Try each SDK call without writing code in the [Playground](/integration/playground).
+- Review [Lifecycle and configuration](/integration/lifecycle) before extending the integration.
+- Do not commit Artifactory tokens or other credentials to the host application.
