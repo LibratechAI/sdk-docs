@@ -1,0 +1,74 @@
+---
+title: "Integration guide"
+sidebarTitle: "Integration overview"
+description: "Implement and validate a reliable Libra SDK integration."
+---
+
+The Libra SDK lets a host product embed Libra's chat experience in an isolated iframe. The host owns the surrounding product UI and chooses when and where the widget appears; the SDK owns the chat interface and its session.
+
+This guide is for engineers and QA. To see what users experience first, read [Capabilities](/versions/v0.15.0/capabilities/overview).
+
+## What the host provides
+
+- A valid `productId` identifying the legal-research product.
+- A host-owned open control and a visible target container.
+- The surrounding panel or modal when the product uses one.
+- The close behavior. Providing `onClose` enables the SDK header; the callback should hide the host wrapper and call `Libra.detach()`.
+
+## Get started
+
+<Columns cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/versions/v0.15.0/integration/quickstart">
+    Install or load the SDK and attach it to a container.
+  </Card>
+  <Card title="Playground" icon="flask-conical" href="/versions/v0.15.0/integration/playground">
+    Try each SDK call in the hosted playground without writing code.
+  </Card>
+</Columns>
+
+## Implement
+
+<Columns cols={2}>
+  <Card title="Lifecycle and configuration" icon="refresh-cw" href="/versions/v0.15.0/integration/lifecycle">
+    `init`, `attach`, `detach`, `destroy`, mounting, header ownership, and every configuration option.
+  </Card>
+  <Card title="Authentication" icon="key-round" href="/versions/v0.15.0/integration/authentication">
+    Choose the standard popup or proxy path, listen for auth changes, and sign out.
+  </Card>
+  <Card title="BFF and proxy authentication" icon="server" href="/versions/v0.15.0/integration/bff-authentication">
+    Token exchange, identity linking, and host-owned recovery.
+  </Card>
+  <Card title="Host integrations" icon="file-plus" href="/versions/v0.15.0/integration/host-integrations">
+    Document suggestions, attachments, availability boundaries, and citation ownership.
+  </Card>
+  <Card title="Navigation and handoffs" icon="external-link" href="/versions/v0.15.0/integration/navigation-and-handoffs">
+    Open an existing chat and keep product-owned navigation in the host.
+  </Card>
+  <Card title="Locales" icon="languages" href="/versions/v0.15.0/integration/locales">
+    npm and CDN locale loading and runtime changes.
+  </Card>
+  <Card title="Document Viewer integration" icon="file-text" href="/versions/v0.15.0/integration/document-viewer">
+    What the SDK manages and what stays with the host.
+  </Card>
+</Columns>
+
+## Deploy
+
+Use these guides before production release.
+
+<Columns cols={2}>
+  <Card title="Deployment security" icon="shield-check" href="/versions/v0.15.0/integration/deployment-security">
+    CSP, blob workers, framing, and Permissions Policy.
+  </Card>
+  <Card title="Trusted origins" icon="globe-lock" href="/versions/v0.15.0/integration/trusted-origins">
+    `baseUrl` and proxy origin validation, and server-side token handling.
+  </Card>
+  <Card title="Embedding and layout constraints" icon="layout-panel-left" href="/versions/v0.15.0/integration/embedding-constraints">
+    Mount targets, containing blocks, sizing, and stacking.
+  </Card>
+  <Card title="Production readiness" icon="list-checks" href="/versions/v0.15.0/integration/production-readiness">
+    The browser, security, proxy, and layout checklist.
+  </Card>
+</Columns>
+
+The [API reference](/versions/v0.15.0/reference/overview) states the exact public contract.

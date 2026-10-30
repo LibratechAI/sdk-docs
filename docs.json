@@ -123,6 +123,102 @@
             ]
           }
         ]
+      },
+      {
+        "version": "0.15.0",
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.15.0/index",
+              "versions/v0.15.0/solution/overview"
+            ]
+          },
+          {
+            "group": "Integration guide",
+            "icon": "plug",
+            "pages": [
+              "versions/v0.15.0/integration/overview",
+              {
+                "group": "Get started",
+                "expanded": true,
+                "pages": [
+                  "versions/v0.15.0/integration/quickstart",
+                  "versions/v0.15.0/integration/playground"
+                ]
+              },
+              {
+                "group": "Implement",
+                "expanded": true,
+                "pages": [
+                  "versions/v0.15.0/integration/lifecycle",
+                  "versions/v0.15.0/integration/authentication",
+                  "versions/v0.15.0/integration/bff-authentication",
+                  "versions/v0.15.0/integration/host-integrations",
+                  "versions/v0.15.0/integration/navigation-and-handoffs",
+                  "versions/v0.15.0/integration/locales",
+                  "versions/v0.15.0/integration/document-viewer"
+                ]
+              },
+              {
+                "group": "Deploy",
+                "expanded": true,
+                "pages": [
+                  "versions/v0.15.0/integration/deployment-security",
+                  "versions/v0.15.0/integration/trusted-origins",
+                  "versions/v0.15.0/integration/embedding-constraints",
+                  "versions/v0.15.0/integration/production-readiness"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "API reference",
+            "icon": "book-open",
+            "pages": [
+              "versions/v0.15.0/reference/overview"
+            ]
+          },
+          {
+            "group": "Capabilities",
+            "icon": "sparkles",
+            "pages": [
+              "versions/v0.15.0/capabilities/overview",
+              {
+                "group": "SDK-specific",
+                "expanded": true,
+                "pages": [
+                  "versions/v0.15.0/capabilities/sdk-window",
+                  "versions/v0.15.0/capabilities/current-document",
+                  "versions/v0.15.0/capabilities/citation-navigation",
+                  "versions/v0.15.0/capabilities/document-viewer",
+                  "versions/v0.15.0/capabilities/sign-in-and-onboarding",
+                  "versions/v0.15.0/capabilities/language",
+                  "versions/v0.15.0/capabilities/handoffs"
+                ]
+              },
+              {
+                "group": "Libra-native",
+                "expanded": true,
+                "pages": [
+                  "versions/v0.15.0/capabilities/chat-and-answers",
+                  "versions/v0.15.0/capabilities/research-sources-and-citations",
+                  "versions/v0.15.0/capabilities/files-and-tools",
+                  "versions/v0.15.0/capabilities/assistants-history-projects"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Status and support",
+            "icon": "life-buoy",
+            "pages": [
+              "versions/v0.15.0/status/overview",
+              "versions/v0.15.0/changelog"
+            ]
+          }
+        ]
       }
     ],
     "global": {

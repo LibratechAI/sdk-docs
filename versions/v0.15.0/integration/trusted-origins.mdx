@@ -1,0 +1,58 @@
+---
+title: "Trusted origins"
+description: "Validate Libra origins and keep proxy authentication on the server."
+---
+
+Origin rules protect the boundary between the host product, SDK iframe, Libra services, and an optional host BFF. Configure only origins that belong to the deployment you are reviewing.
+
+## Libra base URL
+
+`init()` validates `baseUrl` against the allowed Libra host patterns and throws if it doesn't match. This applies in proxy mode too. Use the approved Libra environment URL rather than an arbitrary service or internal address.
+
+```js
+Libra.init({
+	productId: 'wko_de',
+	baseUrl: 'https://app.libratech.ai'
+});
+```
+
+Confirm the exact environment URL with the release owner before production deployment. A staging source baseline or local test URL is not evidence that the same URL is approved for production.
+
+## Proxy origin validation
+
+When `proxy.url` is configured, the browser-side SDK allows an exact same-origin proxy, a sibling host on the same registrable domain, or a localhost proxy when the host page is also running on localhost. It rejects arbitrary third-party and unrelated internal origins.
+
+```js
+Libra.init({
+	productId: 'wko_de',
+	proxy: {
+		url: '/api/libra',
+		credentials: 'same-origin'
+	}
+});
+```
+
+This browser check is defense in depth, not authentication. The BFF must authenticate every request, validate the host user's identity and product access, and reject callers that cannot be linked to a Libra identity. See [BFF and proxy authentication](/versions/v0.15.0/integration/bff-authentication) for the request and identity-linking flow.
+
+## Token handling
+
+Keep Libra JWTs, exchange credentials, and link secrets on the server. Browser-visible proxy headers may carry only the host's intended caller context. Do not put long-lived secrets in `proxy.headers`, source code, or HTML.
+
+The BFF should:
+
+- authenticate the host session;
+- validate customer or product access;
+- perform the server-side identity or token exchange;
+- forward the request with the server-side Libra authorization header;
+- return the upstream status without exposing the Libra token; and
+- log and rate-limit failures according to the host product's security policy.
+
+A `401` from the BFF is an authentication or identity-linking problem, not a signal to recreate the SDK popup flow in the host.
+
+## Trusted-origin review
+
+Verify the page origin, `baseUrl`, and `proxy.url` as a set. A proxy on the same registrable domain can still be the wrong service, so route ownership and server authentication must be reviewed separately from the SDK's origin guard.
+
+Do not depend on internal `postMessage` event names, blob URLs, or iframe origins as trusted application APIs. Those are implementation details and may change between SDK builds.
+
+See [deployment security](/versions/v0.15.0/integration/deployment-security) for CSP and browser policies.

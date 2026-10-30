@@ -1,0 +1,56 @@
+---
+title: "Locales"
+description: "Load supported locale bundles and change the SDK language at runtime."
+---
+
+The SDK bundles `en-US`. Load any other supported locale explicitly before `Libra.init()`. A locale bundle has a BCP-47 `code` and a flat `translations` map.
+
+## npm
+
+Import the locale bundle from the SDK locale entry point and pass it to `Libra.init()`:
+
+```ts
+import { Libra } from '@libra/sdk';
+import deDE from '@libra/sdk/locales/de-DE';
+
+Libra.init({
+	productId: 'wko_de',
+	locale: 'de-DE',
+	locales: [deDE]
+});
+```
+
+The initial `locale` must be `en-US` or match a registered bundle. An unregistered locale throws during initialization so a missing language resource does not silently fall back.
+
+## CDN
+
+CDN locale bundles self-register when their script is loaded. Include the locale script before the SDK calls `Libra.init()`:
+
+```html
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.0/locales/de-DE.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.0/libra.umd.js"></script>
+<script>
+	const { Libra } = window.Libra;
+	Libra.init({ productId: 'wko_de', locale: 'de-DE' });
+</script>
+```
+
+The locale script registers its bundle in `window.__libraLocales__`; `init()` merges registered CDN bundles automatically. Use matching SDK and locale versions.
+
+## Change locale at runtime
+
+Call `Libra.setLocale()` after `Libra.attach()` has started the session:
+
+```ts
+await Libra.setLocale('de-DE');
+```
+
+The locale must already be registered through `init({ locales })` or a CDN locale script. Runtime changes update the embedded chat and the SDK document viewer synchronization. Register all locales the host may select before initialization.
+
+## Supported locales
+
+The public type currently lists: `en-US`, `de-DE`, `de-CH`, `es-ES`, `pl-PL`, `nl-NL`, `nl-BE`, `fr-BE`, `fr-CH`, `fr-FR`, `it-IT`, `it-CH`, `ro-RO`, `hu-HU`, `cs-CZ`, and `sk-SK`.
+
+Availability of a locale bundle is separate from the type's supported-code list. Confirm that the matching npm or CDN asset exists for the SDK version you ship.
+
+See [the Quickstart](/versions/v0.15.0/integration/quickstart) for the base npm and CDN setup.

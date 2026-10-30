@@ -1,0 +1,50 @@
+---
+title: "Embedding and layout constraints"
+description: "Keep the SDK wrapper aligned when the host controls layout, stacking, and containing blocks."
+---
+
+`Libra.attach()` positions the SDK's fixed wrapper over the target element. The iframe is not moved into the target; the wrapper is continuously synchronized to the target's viewport rectangle. Layout and CSS choices around the target therefore affect whether the widget stays aligned.
+
+## Mount target requirements
+
+The `mountTarget` is resolved during `Libra.init()` and must remain in the DOM for the SDK lifetime. The target should have stable, non-zero dimensions when `attach()` runs.
+
+```js
+Libra.init({
+	productId: 'wko_de',
+	mountTarget: 'libra-root',
+	zIndex: 5
+});
+```
+
+Use a host-owned stacking context when the product needs predictable layering:
+
+```css
+#libra-root {
+	isolation: isolate;
+}
+```
+
+`isolation: isolate` creates a stacking context without changing the containing block used by fixed-position descendants.
+
+## Containing-block restrictions
+
+Do not put the mount target or its ancestors inside an element whose computed styles establish a containing block for fixed positioning. The SDK checks the ancestor chain during initialization and warns when it finds:
+
+- `transform` other than `none`;
+- `perspective` other than `none`;
+- `filter` or `backdrop-filter` other than `none`;
+- `will-change` containing `transform`, `perspective`, or `filter`; or
+- `contain` containing `paint`, `layout`, `content`, or `strict`.
+
+These properties can make the fixed wrapper use an ancestor instead of the viewport. The SDK then writes viewport-relative coordinates into the wrong containing block, which can visibly misplace the widget.
+
+Move the target outside that ancestor, remove the offending property, or use `isolation: isolate` when the actual requirement is only stacking isolation. A warning is best-effort: if styles change after initialization, the host must still test the resulting layout.
+
+## Framing and responsive layout
+
+Give the attached target usable dimensions at every supported breakpoint. Test scrolling, resizing, layout shifts, modal transitions, and the document viewer's split or overlay states. Do not rely on the iframe's intrinsic size to establish the host panel's dimensions.
+
+The host owns the surrounding panel, modal, and responsive breakpoint behavior. The SDK owns the content inside its frames.
+
+See [Lifecycle and configuration](/versions/v0.15.0/integration/lifecycle#mounting-and-positioning) for lifecycle examples and [production readiness](/versions/v0.15.0/integration/production-readiness) for layout checks.

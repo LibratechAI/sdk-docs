@@ -1,0 +1,83 @@
+---
+title: "BFF and proxy authentication"
+description: "Route SDK requests through a host-owned backend and keep Libra credentials server-side."
+---
+
+Use proxy mode when the host product owns the user's identity or must keep Libra credentials out of the browser. The SDK sends API requests to a host-owned Backend for Frontend (BFF), and the BFF authenticates the caller before forwarding requests to Libra.
+
+This guide describes the boundary and request responsibilities. The host team owns the BFF implementation, customer-token validation, identity linking, token exchange, and recovery behavior.
+
+## Request flow
+
+```text
+SDK iframe -> host BFF -> Libra backend
+     request       authenticated request
+```
+
+When `proxy` is configured, the SDK rewrites backend API paths to `proxy.url`, merges the configured proxy headers, and uses the configured fetch credentials. The SDK does not read or store a Libra JWT in browser storage in proxy mode.
+
+```js
+Libra.init({
+  productId: 'wko_de',
+  proxy: {
+    url: '/api/libra',
+    headers: {
+      'X-Libra-SDK-Product-Access-Token': customerToken
+    },
+    credentials: 'same-origin'
+  }
+});
+```
+
+Do not put long-lived secrets or server-only credentials in `proxy.headers`. Browser-visible headers should contain only the host's intended caller context; the BFF performs the privileged exchange.
+
+## BFF responsibilities
+
+The host BFF must:
+
+1. Authenticate the host request and validate the customer's identity or product access token.
+2. Exchange the validated customer identity for a Libra SDK JWT when the request reaches the Libra backend.
+3. Forward the request to the requested Libra API path with the server-side `Authorization: Bearer <jwt>` header.
+4. Return the backend status and response without exposing the Libra JWT to the browser.
+5. Return `401` when the caller is not authenticated or cannot be linked to a Libra identity.
+6. Own customer-specific recovery, logging, rate limits, and server-side token handling.
+
+The SDK still performs its normal `checkAuth()` request through the BFF. A `401` causes the SDK authentication experience to appear; it does not mean the host should recreate the SDK popup flow.
+
+## First-time identity linking
+
+A host user may be authenticated by the host product but not yet linked to a Libra identity. In that case, the BFF and Libra complete a one-time link flow before the SDK can use the mapped account:
+
+1. The BFF authenticates the host user and supplies the product access context.
+2. The SDK starts the embedded link flow through the configured proxy.
+3. Libra validates the product access token and creates a short-lived, single-use link nonce.
+4. The SDK opens the Libra authentication popup with that link nonce.
+5. The Libra callback consumes the nonce and creates the identity link.
+6. The SDK retries the request; the mapped user can continue through the normal authenticated flow.
+
+The exact customer-token validation and identity-linking contract belongs to the host/backend integration. Do not expose link secrets or token values in client-side documentation.
+
+## Proxy origin requirements
+
+`proxy.url` must be on the host's own site. See [Proxy origin validation](/versions/v0.15.0/integration/trusted-origins#proxy-origin-validation) for the allowed origins and [Token handling](/versions/v0.15.0/integration/trusted-origins#token-handling) for what stays on the server.
+
+## Sign-out and recovery
+
+In normal mode, SDK sign-out clears the SDK token and remounts the authentication page. In proxy mode, there is no browser token to clear; the SDK asks Libra to remove the user's identity link through the proxy. The host BFF remains responsible for ending or invalidating its own session and for deciding how the user can recover when linking or token exchange fails.
+
+The host receives the standard `unauthenticated` state with source `signout`. `onAuthError` reports interactive sign-in or sign-up failures, including an `account_in_use` failure when the WK account is already linked to another user.
+
+The public error reasons are `popup_blocked`, `popup_closed`, `authentication_failed`, `embedded_auth_failed`, and `account_in_use`. Treat `embedded_auth_failed` as a host/BFF recovery boundary: the SDK reports the failure, but the host owns token exchange, retry, and session recovery.
+
+## Troubleshooting ownership
+
+| Symptom | First owner to investigate |
+| --- | --- |
+| The SDK cannot reach `proxy.url` | Host product routing, deployment, or BFF availability |
+| The BFF returns `401` | Host authentication, customer-token validation, or missing identity link |
+| Token exchange fails | Host BFF credentials or Libra backend identity exchange |
+| Popup is blocked or closed | Browser/SDK authentication flow; inspect `onAuthError` |
+| Account is linked to another user | Host identity mapping and Libra account state |
+| Authenticated account is gated | Libra onboarding, entitlement, or subscription state |
+
+For browser security headers and deployment validation, see [Deployment security](/versions/v0.15.0/integration/deployment-security) and [Production readiness](/versions/v0.15.0/integration/production-readiness). For the standard popup path and auth callbacks, see [Authentication](/versions/v0.15.0/integration/authentication). For callback shapes, see the [API reference](/versions/v0.15.0/reference/overview).

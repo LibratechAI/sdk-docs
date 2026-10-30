@@ -1,0 +1,40 @@
+---
+title: "Current-document context"
+description: "Let users bring the document they are working on into the chat."
+---
+
+When a user opens or selects a document in your product, your product can suggest it to Libra. The SDK shows the suggestion as a chip above the chat input. Selecting the chip adds the document to the chat input. Related attachments, such as a PDF of the same document, can come with it.
+
+<Columns cols={2}>
+  <Frame caption="The suggestion chip above the chat input.">
+    <img src="/versions/v0.15.0/images/capabilities/suggestion.png" alt="Suggestion chip for a court decision above the chat input" />
+  </Frame>
+  <Frame caption="After selecting the chip, the document is in the chat input.">
+    <img src="/versions/v0.15.0/images/capabilities/suggestion-attached.png" alt="The court decision attached in the chat input with a Clear all button" />
+  </Frame>
+</Columns>
+
+Your product can also attach documents or files directly, without a suggestion.
+
+| What your product does | What users see |
+| --- | --- |
+| Suggests the current document with `setSuggestedAttachment()` | A suggestion chip above the chat input |
+| Clears the suggestion with `clearSuggestedAttachment()` | The suggestion disappears; anything already attached stays |
+| Attaches documents or files with `addAttachments()` | The attachments appear in the chat input |
+| Removes host attachments with `clearAttachments()` | Attachments your product added are removed; the user's own uploads stay |
+
+## Availability
+
+Your product owns document identity, URLs, permissions, and product access.
+
+Libra can use a research document only if it's indexed in your product's FAB index. Libra checks each document together with its related attachments:
+
+- **Suggested documents** are checked in the background while the chip is visible. If any document in the group is unavailable, selecting the chip attaches nothing and shows a **Content unavailable** notice.
+- **Attached documents** show a loading state while they're checked. Unavailable documents stay in the chat input, disabled, and block sending until the user removes them. A notice offers **Try again** and **Remove**.
+- **Files** that your product passes from memory skip the check. Libra uploads them to the user's active project.
+
+Documents from legal software products aren't in the FAB index. Libra adds them to the user's active project and indexes them. They become available when indexing finishes, or disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing takes longer than 90 seconds.
+
+Your product doesn't receive the result of these checks.
+
+See [Host integrations](/versions/v0.15.0/integration/host-integrations) for the full integration contract and examples.

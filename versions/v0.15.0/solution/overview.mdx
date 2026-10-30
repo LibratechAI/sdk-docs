@@ -1,0 +1,57 @@
+---
+title: "Solution overview"
+description: "Understand the Libra integrated solution, its capabilities, and its ownership boundaries."
+---
+
+Libra brings an in-context version of Libra Chat into a host research product. People can research and chat in parallel, use relevant product context, and continue work in Libra Workspace when a broader workflow is needed.
+
+This overview is for product, design, QA, and business readers. It explains what people experience and who controls each part. Implementation details belong in the [Integration guide](/versions/v0.15.0/integration/overview), and the shipped public contract belongs in the [API reference](/versions/v0.15.0/reference/overview).
+
+## How the solution fits together
+
+- The **host product** provides the place where the Add-in appears, the product context it can offer, and host-owned navigation or handoffs.
+- The **Libra Add-in** provides the in-context chat experience, answer rendering, citations, research controls, and responsive side-panel behavior.
+- The **`@libra/sdk`** connects the host product to exposed lifecycle, configuration, context, citation, locale, and handoff capabilities. The SDK does not make every Add-in behavior host-configurable.
+- **Backend services** provide account state, retrieval, indexing, entitlements, synchronization, and other service-dependent behavior.
+- **Libra Workspace** provides the broader Libra environment and owns capabilities that are not available in the embedded Add-in.
+
+## Capabilities and scope
+
+The labels in this table describe ownership, not just where a feature is visible. Each capability links to its page in [Capabilities](/versions/v0.15.0/capabilities/overview).
+
+| Capability | What people can do | Ownership and controllability | Scope and dependencies |
+| --- | --- | --- | --- |
+| [SDK window](/versions/v0.15.0/capabilities/sdk-window) | Use Libra beside the host product, including responsive layouts. | Add-in behavior; the host product controls placement, launch affordances, resizing exposure, and mount context. | Depends on the host product's layout and the selected integration model. |
+| [Chat and answers](/versions/v0.15.0/capabilities/chat-and-answers) | Ask questions, receive answers, use chat modes, use Deep Thinking where available, provide voice input, and copy, regenerate, export, or create an email from an answer. | Add-in behavior; the host can expose the experience but does not control answer generation or internal rendering. | Account, entitlement, service availability, and indexing can affect results or available modes. |
+| [Citations and source navigation](/versions/v0.15.0/capabilities/citation-navigation) | Review footnotes, citation cards, citation lists, and navigate to cited sources. | Add-in owns citation rendering; the host product can provide navigation handling and intercept supported citation callbacks. | Results depend on retrieved and indexed content and the host's document or navigation integration. |
+| [Research Sources](/versions/v0.15.0/capabilities/research-sources-and-citations) | Work with the product and modules available as research sources. | Host product can identify or influence available sources through integration; Add-in and backend services control retrieval behavior. | Product setup, module availability, entitlements, and the configured research sources apply. |
+| [Files and current document](/versions/v0.15.0/capabilities/current-document) | Upload one or more files, use project files, or add the current document to a chat. | Add-in owns upload and attachment behavior; the host product can provide current-document context through the exposed integration. | Upload limits, file processing, indexing, account tier, and current-document availability apply. |
+| [Context](/versions/v0.15.0/capabilities/files-and-tools#files-and-context) | Type `@` in the chat input to add Assistants, documents, or playbooks to a conversation. | Add-in behavior; the host product can suggest or attach documents through the SDK. | The SDK knows only the documents your product suggests or attaches. It doesn't read the host page. |
+| [Tools](/versions/v0.15.0/capabilities/files-and-tools#tools-menu) | Use tools made available for the current account and product setup. | Add-in behavior; availability is controlled by backend configuration, product setup, and entitlements. | The available tool set can vary by account, product, and environment. |
+| [Assistants](/versions/v0.15.0/capabilities/assistants-history-projects) | Use available Assistants in the embedded experience. | Add-in presents and runs Assistants; viewing and creating them open Libra Workspace. | Availability depends on account, entitlements, and Workspace configuration. |
+| [Chat History and Projects](/versions/v0.15.0/capabilities/assistants-history-projects) | Return to previous chats and work with Projects where available. | Add-in presents the experience; backend services and Workspace own persistence and synchronization. | Account tier and Workspace configuration limit availability. |
+| [Authentication and onboarding](/versions/v0.15.0/capabilities/sign-in-and-onboarding) | Sign in, sign up, complete account-state gates, restore a session, and sign out. | Authentication may use standard Libra popup flows or a host-owned proxy/BFF flow; account state and recovery boundaries depend on the selected integration. | Identity linking, entitlements, backend configuration, and host recovery responsibilities apply. |
+| [Workspace handoff and synchronization](/versions/v0.15.0/capabilities/handoffs) | Continue work in Libra Workspace and synchronize supported context or sessions. | Add-in and backend services provide synchronization; the host product can initiate supported handoffs. | Workspace account state, synchronization support, and product configuration apply. |
+
+## Important boundaries
+
+- Users can run Workflows and Assistants in the embedded experience. Viewing or creating them, and editing generated documents, open Libra Workspace. Chats are shared between the two, so users can continue a conversation in either place. See [Handoffs to Libra](/versions/v0.15.0/capabilities/handoffs).
+- Features can be hidden, or disabled with an upgrade prompt, when a subscription doesn't include them. Starter accounts have limits on chat messages, document uploads, and Projects per usage period, and can't create playbooks, reviews, or discoveries. Deep Thinking has a daily message limit; when it's reached, answers use another model.
+- Content may be unavailable when it has not been indexed or when the relevant product, module, document, or account context is unavailable.
+- The SDK exposes selected integration controls. Internal Add-in behavior, answer generation, retrieval, citation rendering, and entitlement decisions are not automatically host-configurable.
+
+## Continue by intent
+
+Product and business readers can use this page to understand the experience and ownership boundaries.
+
+<Columns cols={3}>
+  <Card title="Capabilities" icon="sparkles" href="/versions/v0.15.0/capabilities/overview">
+    For designers and QA: screens, states, and behavior in the SDK window.
+  </Card>
+  <Card title="Integration guide" icon="plug" href="/versions/v0.15.0/integration/overview">
+    For engineers and host product teams: implement, configure, and deploy.
+  </Card>
+  <Card title="API reference" icon="book-open" href="/versions/v0.15.0/reference/overview">
+    For contract-focused readers: methods, configuration, and types.
+  </Card>
+</Columns>
