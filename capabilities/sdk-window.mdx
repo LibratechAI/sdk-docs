@@ -1,0 +1,53 @@
+---
+title: "SDK window and header"
+description: "Where the SDK window opens and what its header contains."
+---
+
+import { AnnotatedImage } from "/snippets/annotated-image.jsx"
+import { screenshotMarkers } from "/snippets/screenshot-markers.jsx"
+
+Your product decides when and where the SDK window opens, how wide it is, and whether users can resize it. Hiding and showing the window keeps the chat session.
+
+## The header
+
+<AnnotatedImage
+  markers={screenshotMarkers["sdk-home"]}
+  items={[
+    { title: "Close", text: "closes the SDK window. Shown only when your product provides onClose; your product decides what closing does." },
+    { title: "Menu", text: "contains Sign Out." },
+    { title: "Project selector", text: "switches the active project." },
+    { title: "Chat History", text: "finds and reopens earlier chats." },
+    { title: "New chat", text: "starts a blank conversation." },
+    { title: "Continue in Libra", text: "opens the current chat in Libra Workspace in a new tab." },
+  ]}
+>
+  <img src="/images/capabilities/sdk-home.png" alt="SDK window with the Libra header and chat controls above an empty chat" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(127,127,127,.25)" }} />
+</AnnotatedImage>
+
+The top bar with the Libra wordmark and **Close** is optional. If your product has its own close control, leave out `onClose`. The chat controls always appear.
+
+## Width
+
+<Columns cols={2}>
+  <Frame caption="At 360px, Continue in Libra shows only its icon.">
+    <img src="/images/capabilities/sdk-window-narrow.png" alt="SDK window at 360px wide with icon-only header buttons" />
+  </Frame>
+  <Column>
+
+  The SDK window adapts to the width your product gives it. Header labels appear as the window gets wider:
+
+  - From 421px: **Continue in Libra**.
+  - From 640px: **Chat History** and **New chat**.
+
+  A wider window doesn't add features.
+
+  </Column>
+</Columns>
+
+## Your product's responsibilities
+
+- Keep the target element in the page, with usable width and height, while the SDK window is open.
+- Avoid CSS that creates a containing block on the target's ancestors, such as `transform` or `filter`. It misplaces the window.
+- Hide your surrounding panel when users close the window.
+
+See [Quickstart](/integration/quickstart), [Header ownership](/integration/lifecycle#header-ownership), and [Embedding and layout constraints](/integration/embedding-constraints). The exact contract is in the [API reference](/reference/overview).
