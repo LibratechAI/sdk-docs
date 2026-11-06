@@ -49,7 +49,8 @@
                 "expanded": true,
                 "pages": [
                   "integration/quickstart",
-                  "integration/playground"
+                  "integration/playground",
+                  "integration/configuration"
                 ]
               },
               {
@@ -59,7 +60,10 @@
                   "integration/lifecycle",
                   "integration/authentication",
                   "integration/bff-authentication",
-                  "integration/host-integrations",
+                  "integration/attachments",
+                  "integration/suggestions",
+                  "integration/add-attachments",
+                  "integration/citation-clicks",
                   "integration/navigation-and-handoffs",
                   "integration/locales",
                   "integration/document-viewer"
@@ -293,7 +297,11 @@
     },
     {
       "source": "/host-integrations",
-      "destination": "/integration/host-integrations"
+      "destination": "/integration/attachments"
+    },
+    {
+      "source": "/integration/host-integrations",
+      "destination": "/integration/attachments"
     },
     {
       "source": "/navigation-and-handoffs",
@@ -369,11 +377,11 @@
     },
     {
       "source": "/guides/citations",
-      "destination": "/integration/host-integrations"
+      "destination": "/integration/citation-clicks"
     },
     {
       "source": "/guides/document-suggestions",
-      "destination": "/integration/host-integrations"
+      "destination": "/integration/suggestions"
     },
     {
       "source": "/guides/chat-handoff",

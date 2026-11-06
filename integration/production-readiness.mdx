@@ -32,6 +32,13 @@ Use this checklist during browser, security, and layout review. Record the SDK p
 - [ ] Scrolling, resizing, animations, modals, and document-viewer split/overlay states remain aligned.
 - [ ] Citation default navigation and host-owned citation navigation are both tested.
 
+## Content availability
+
+- [ ] Every research document your product suggests or attaches is in your product's FAB index. Libra doesn't add documents to the index. See [Availability boundary](/integration/attachments#availability-boundary).
+- [ ] Unavailable documents were tested: the **Content unavailable** notice, **Try again**, and **Remove**.
+- [ ] For legal software products, users have a connection to the product, the product is enabled for their team, and documents finish indexing within 90 seconds.
+- [ ] If your product passes host files, document uploads are enabled for your users' accounts.
+
 ## Evidence and ownership
 
 - [ ] The reviewed SDK version, source revision, environment, and browser matrix are recorded.

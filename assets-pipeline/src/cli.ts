@@ -150,12 +150,6 @@ program
   .description("Headed login to the SDK playground as the capture account; saves the session for the target")
   .option("--target <target>", "release, next, or local", "release")
   .action(async (opts) => {
-    const email = process.env.CAPTURE_ACCOUNT_EMAIL;
-    const password = process.env.CAPTURE_ACCOUNT_PASSWORD;
-    if (!email || !password) {
-      console.error("CAPTURE_ACCOUNT_EMAIL / CAPTURE_ACCOUNT_PASSWORD not set — copy auth/.env.example to auth/.env and fill in the dedicated capture-account credentials (never personal ones).");
-      process.exit(1);
-    }
     const target = parseTarget(opts.target);
     const storageState = storageStatePath(target);
     const browser = await chromium.launch({ headless: false });

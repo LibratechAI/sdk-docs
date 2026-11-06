@@ -27,8 +27,9 @@ Adapted from `LibratechAI/documentation`'s `weekly-docs-update` skill, but:
   unreleased changes. Published docs use `/versions/v<sdkVersion>/`.
 - **Edit a page → queue its assets.** If a release changed what a playground
   component looks like or does, its docs screenshot is stale.
-- **The changelog is user-facing only.** No internal detail, no security
-  implications, no infra/eval/deploy noise — same rules as the main docs repo.
+- **The changelog is an exact copy** of `packages/sdk/CHANGELOG.md` on the
+  sandbox `staging` branch (the staging changelog page), including
+  **Unreleased** and upstream typos. Never edit its text; regenerate it.
 - **Nothing is committed without approval.** Pushing `main` publishes the site.
 
 ## Prerequisites
@@ -42,7 +43,6 @@ Adapted from `LibratechAI/documentation`'s `weekly-docs-update` skill, but:
    [assets-pipeline/README.md](../../../assets-pipeline/README.md)):
    ```bash
    cd assets-pipeline && npm install && npx playwright install chromium
-   cp auth/.env.example auth/.env   # staging capture credentials; delete after npm run auth
    ```
 
 ## The daily run
@@ -99,20 +99,13 @@ rename the latest entry in `docs.json` `navigation.versions` to `<new>` (keep
   link, the API reference version and source revision
   (`git -C "$SANDBOX_PATH" rev-parse sdk-v<new>^{commit}`), and Status and support.
 
-### 6. Update the changelog — `changelog.mdx`
-Add one block per release at the top, newest first:
-```mdx
-<Update label="Release: X.Y.Z" id="release-XYZ">
-
-_D Month YYYY_
-
-**New.**
-- …
-
-</Update>
+### 6. Regenerate the changelog — `changelog.mdx`
+```bash
+node scripts/sync-changelog.mjs           # from origin/staging in $SANDBOX_PATH
+node scripts/sync-changelog.mjs --check   # confirms it matches
 ```
-Group items as **New**, **Improved**, **Fixed**, **Deprecated**, **Removed**.
-Use the release date from `CHANGELOG.md`.
+The text is copied word for word, including **Unreleased** and typos. Run it
+on every daily check, not only on releases, so Unreleased stays current.
 
 ### 7. Update affected pages
 - Edit the pages listed for each bucket in the scan. The Capabilities page and

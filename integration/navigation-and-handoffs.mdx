@@ -15,7 +15,7 @@ openSavedChatButton.addEventListener('click', async () => {
 });
 ```
 
-The method sends the chat ID to the embedded Libra application. The host should validate that the ID belongs to the signed-in user before presenting it as a product action.
+The method sends the chat ID to the embedded Libra application, and the chat opens in the SDK window in place of the current one. The host should validate that the ID belongs to the signed-in user before presenting it as a product action.
 
 ### Reopen a chat from a main-app citation
 
@@ -38,7 +38,7 @@ The user then sees the cited document in your product with the conversation that
 
 ## Citation handoffs
 
-Use `onCitationClick` when a host viewer or main application should own research-source navigation. Claim only the sources your host can resolve, and leave the rest untouched so the SDK opens them in a new tab. See [Citation ownership](/integration/host-integrations#citation-ownership) for the payload, example, and checklist.
+Use `onCitationClick` when a host viewer or main application should own research-source navigation. Claim only the sources your host can resolve, and leave the rest untouched so the SDK opens them in a new tab. See [Citation ownership](/integration/citation-clicks) for the payload, example, and checklist.
 
 ## Main-app and generated-document handoffs
 
@@ -57,4 +57,4 @@ The `ExternalDocument.url` field is the navigation target for a suggested docume
 - The SDK owns embedded chat navigation and the default behavior for unclaimed research citations.
 - `preventDefault()` is the boundary that transfers an individual citation navigation to the host.
 
-See [the Integration guide](/integration/overview) for lifecycle ordering and [host integrations](/integration/host-integrations) for document and citation contracts.
+See [the Integration guide](/integration/overview) for lifecycle ordering and [attachments](/integration/attachments) and [citation clicks](/integration/citation-clicks) for document and citation contracts.

@@ -27,14 +27,18 @@ Your product can also attach documents or files directly, without a suggestion.
 
 Your product owns document identity, URLs, permissions, and product access.
 
-Libra can use a research document only if it's indexed in your product's FAB index. Libra checks each document together with its related attachments:
+<Warning>
+**FAB index required.** Libra can use a research document only if it's already in your product's FAB index. Libra checks the index but doesn't add documents to it.
+</Warning>
+
+Libra checks each research document together with its related attachments:
 
 - **Suggested documents** are checked in the background while the chip is visible. If any document in the group is unavailable, selecting the chip attaches nothing and shows a **Content unavailable** notice.
 - **Attached documents** show a loading state while they're checked. Unavailable documents stay in the chat input, disabled, and block sending until the user removes them. A notice offers **Try again** and **Remove**.
-- **Files** that your product passes from memory skip the check. Libra uploads them to the user's active project.
+- **Files** that your product passes from memory skip the check. Libra uploads them to the user's active project and indexes them like any upload.
 
-Documents from legal software products aren't in the FAB index. Libra adds them to the user's active project and indexes them. They become available when indexing finishes, or disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing takes longer than 90 seconds.
+Documents from legal software products aren't in the FAB index. Libra adds them to the user's active project and starts indexing them; a suggested document is added only when the user selects its chip. They become available when indexing finishes, or disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing takes longer than 90 seconds.
 
 Your product doesn't receive the result of these checks.
 
-See [Host integrations](/integration/host-integrations) for the full integration contract and examples.
+See [Suggest an attachment](/integration/suggestions), [Add attachments](/integration/add-attachments), and [Attachments and availability](/integration/attachments) for the integration contract and examples.

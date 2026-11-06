@@ -30,9 +30,22 @@ Libra.init({
 
 The host does not implement the standard popup authentication flow. It listens for state and error callbacks when it needs to update host UI or telemetry. A blocked or closed popup is reported through `onAuthError`; successful sign-in and sign-up are reported as authenticated states.
 
+### What the user sees
+
+| Your product receives or calls | What the user sees |
+| --- | --- |
+| `authenticated` / `existing_session` | The chat, without signing in. |
+| `unauthenticated` / `no_session` | The welcome screen with **Sign in** and **Start free trial**. |
+| `authenticated` / `signin` | The popup closes and the chat opens. |
+| `authenticated` / `signup` | Onboarding in the SDK window, then the chat. |
+| `onAuthError` | A failed attempt doesn't change the auth state, so the welcome screen stays. For `account_in_use`, an error message says the WK account is already linked to another user. |
+| `Libra.signOut()` | The welcome screen. |
+
+See [Sign-in and onboarding](/capabilities/sign-in-and-onboarding) for screenshots of each screen.
+
 ## Account and onboarding gates
 
-Authentication is separate from account eligibility. After authentication, the SDK can present onboarding or account-state gates when the account needs action, has an unavailable subscription state, or is waiting for access. Treat these states as part of the SDK experience and route product-specific recovery to the owning Libra or host flow rather than assuming that a missing chat view is an integration failure.
+Authentication is separate from account eligibility. After authentication, the SDK can present onboarding or account-state gates when the account needs action, has an unavailable subscription state, or is waiting for access. Users then see an [account screen](/capabilities/sign-in-and-onboarding#account-screens) instead of the chat; each has **Sign Out**, which emits `unauthenticated` / `signout`. Treat these states as part of the SDK experience and route product-specific recovery to the owning Libra or host flow rather than assuming that a missing chat view is an integration failure.
 
 ## Sign-out and session restoration
 

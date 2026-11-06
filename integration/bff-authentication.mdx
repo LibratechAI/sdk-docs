@@ -5,7 +5,7 @@ description: "Route SDK requests through a host-owned backend and keep Libra cre
 
 Use proxy mode when the host product owns the user's identity or must keep Libra credentials out of the browser. The SDK sends API requests to a host-owned Backend for Frontend (BFF), and the BFF authenticates the caller before forwarding requests to Libra.
 
-This guide describes the boundary and request responsibilities. The host team owns the BFF implementation, customer-token validation, identity linking, token exchange, and recovery behavior.
+The host team owns the BFF implementation, customer-token validation, identity linking, token exchange, and recovery behavior. This page gives the prerequisites and an illustrative reference implementation.
 
 ## Request flow
 
@@ -14,22 +14,50 @@ SDK iframe -> host BFF -> Libra backend
      request       authenticated request
 ```
 
-When `proxy` is configured, the SDK rewrites backend API paths to `proxy.url`, merges the configured proxy headers, and uses the configured fetch credentials. The SDK does not read or store a Libra JWT in browser storage in proxy mode.
+When `proxy` is configured, the SDK routes all its API requests (`/api`, `/openai`, `/audio`, `/rag`) to `proxy.url` instead of `baseUrl`, merges the configured proxy headers, and uses the configured fetch credentials. The localStorage token flow is disabled: the browser never holds a Libra or customer token.
+
+## Prerequisites
+
+Proxy mode runs against staging and production only.
+
+### You provide to Libra
+
+Required for each environment (staging, production):
+
+| Value | Example |
+| --- | --- |
+| IdP issuer (`iss`) | `https://login.wolterskluwer.eu` |
+| JWKS URL | `https://login.wolterskluwer.eu/pf/JWKS` |
+| Expected token audience (`aud`), optional | `DE.Libra.FAB` |
+
+### Libra provides to you
+
+| Item | Value |
+| --- | --- |
+| Libra backend base URL | Staging `https://staging.libratech.ai`, production `https://app.libratech.ai` |
+| Auth0 domain | Staging `libra-staging.eu.auth0.com`, production `libra-prod.eu.auth0.com` |
+| Embedded audience (`audience`) | `https://embedded.libratech.ai/api` |
+| Product ID | See `ProductId` in the [API reference](/reference/overview) |
+| M2M `client_id` and `client_secret` | Shared privately, one client per product |
+| `subject_token_type` URN | Per identity provider, for example `urn:wk:oauth:token-type:oneid-access-token` (OneID) |
+
+## Point the SDK at your BFF
+
+The host page sends the session cookie with every SDK request instead of a browser-held token:
 
 ```js
 Libra.init({
   productId: 'wko_de',
   proxy: {
-    url: '/api/libra',
-    headers: {
-      'X-Libra-SDK-Product-Access-Token': customerToken
-    },
-    credentials: 'same-origin'
+    // proxy.url must live on the host's own site. init() throws otherwise.
+    url: 'https://your-app.example.com/api/libra',
+    credentials: 'include' // attach the session cookie; same-origin by default
+    // headers: { ... }    // optional, if you use headers for auth with the BFF
   }
 });
 ```
 
-Do not put long-lived secrets or server-only credentials in `proxy.headers`. Browser-visible headers should contain only the host's intended caller context; the BFF performs the privileged exchange.
+Don't put secrets, server-only credentials, or customer tokens in `proxy.headers`. The BFF adds the product tokens on the server.
 
 ## BFF responsibilities
 
@@ -43,6 +71,150 @@ The host BFF must:
 6. Own customer-specific recovery, logging, rate limits, and server-side token handling.
 
 The SDK still performs its normal `checkAuth()` request through the BFF. A `401` causes the SDK authentication experience to appear; it does not mean the host should recreate the SDK popup flow.
+
+### What the user sees
+
+The SDK reacts only to the HTTP status your BFF returns:
+
+| BFF response | What the user sees |
+| --- | --- |
+| Success | The chat. |
+| `401`, including a user with no linked Libra account yet | The SDK's login or link screen. |
+| Any other error | A generic error screen. During startup, a `5xx` shows the SDK error page. |
+
+After the user signs out in proxy mode, Libra removes the identity link, so the next sign-in asks the user to link their account again.
+
+## Reference implementation
+
+The BFF runs the same logic for every proxied request. The SDK can only show its login or link screen (on `401`) or a generic error screen (anything else). It can't refresh your session, retry the exchange, or interpret a reason, so the BFF must recover whatever it can before a response reaches the browser.
+
+Illustrative Python:
+
+```python
+def handle(request):
+    # your auth gate — Libra never sees the cookie
+    session = resolve_session(request.cookie)        # missing / expired → respond 401
+    check_csrf(request)                              # unsafe methods → respond 403
+    cid = request.header("X-Correlation-ID") or uuid4()
+
+    # the SDK sends X-Libra-SDK-Product-ID itself; the BFF adds these
+    headers = strip_browser_headers(request.headers)
+    headers["X-Libra-SDK-Product-Access-Token"] = session.access_token
+    headers["X-Libra-SDK-Product-ID-Token"] = session.id_token  # only needed for products with opaque access tokens (see Notes below)
+    headers["X-Correlation-ID"] = cid
+
+    try:
+        libra_token = get_or_exchange(session, cid)
+    except ExchangeFailed as err:
+        # Recover what you can HERE. The SDK is deliberately dumb about auth: it can only
+        # show its login/link screen (on 401) or a generic error screen (anything else).
+        # It can't refresh your session, retry the exchange, or interpret a reason — so
+        # anything recoverable must be recovered before a response reaches the browser.
+        if err.reason == "user_not_found":
+            # NOT an error — the user just has no linked Libra account yet. Forward the
+            # request WITHOUT Authorization; Libra answers 401 → SDK shows login/link screen.
+            return relay(request, headers)
+
+        # Everything else becomes the fixed error envelope below. The SDK acts only on
+        # the status — 401 → login screen, anything else → generic error screen — so map
+        # the reason to a status it understands:
+        status = {
+            "session_expired":       401,   # session couldn't be refreshed → user re-auths in your app
+            "identity_lookup_error": 503,   # transient CTE failure, retries exhausted
+            "auth_unavailable":      503,   # Auth0 5xx / timeout, retries exhausted
+            "upstream_error":        502,   # Auth0 429 or network error — nothing to recover
+        }[err.reason]
+        # Envelope shape is always the same. `reason` / `correlation_id` are for YOUR
+        # logs and support only — never put raw upstream detail (e.g. error_description)
+        # in the response that reaches the browser.
+        return Response(status, {"error": "embedded_auth_failed",
+                                 "reason": err.reason, "correlation_id": cid})
+
+    # a refresh inside get_or_exchange may have rotated the product tokens — re-read them
+    headers["X-Libra-SDK-Product-Access-Token"] = session.access_token
+    headers["X-Libra-SDK-Product-ID-Token"] = session.id_token
+    headers["Authorization"] = f"Bearer {libra_token}"
+    return relay(request, headers)                   # relay Libra's response unchanged
+
+
+def subject_token_for(session):
+    # The exchange subject_token MUST be a JWT. For most IdPs the product access token
+    # is itself a JWT; for other products it is opaque, so fall back to the id_token.
+    # See Notes below for the list of products with opaque access tokens.
+    return session.id_token if ACCESS_TOKEN_IS_OPAQUE else session.access_token
+
+
+def get_or_exchange(session, cid):
+    # REQUIRED cache: the SDK bursts calls on load; a fresh exchange per call trips
+    # Auth0's rate limit. Keyed per user, ~60s TTL, never shared across users.
+    subject_token = subject_token_for(session)        # the JWT we actually exchange
+    if cache.has(subject_token):
+        return cache.get(subject_token)
+
+    reason = None
+    for attempt in range(3):                          # 1 attempt + up to 2 retries
+        res = exchange(subject_token, cid)
+        if res.status == 200:
+            token = res.json["access_token"]
+            cache.set(subject_token, token, ttl=60)  # never log or share this token
+            return token
+
+        reason = classify_failure(res)               # explicit reason code — see below
+        if reason == "invalid_subject_token":
+            # the customer token expired. Only the BFF holds the session, so it must
+            # recover HERE and never forward this to the SDK: refresh, then retry.
+            if not session.refresh():
+                raise ExchangeFailed("session_expired")
+            subject_token = subject_token_for(session)   # refresh may have rotated it
+            continue
+        if reason in ("identity_lookup_error", "auth_unavailable"):
+            sleep(backoff(attempt))                   # transient — short backoff (~250ms), then retry
+            continue
+        break                                         # user_not_found / upstream_error — don't retry
+
+    # retries exhausted (or a non-retryable reason): surface the final reason to handle()
+    raise ExchangeFailed(reason)
+
+
+def exchange(subject_token, cid):
+    # RFC 8693 token exchange against the Libra Auth0 tenant
+    return http.post(f"https://{AUTH0_DOMAIN}/oauth/token", form={
+        "grant_type":         "urn:ietf:params:oauth:grant-type:token-exchange",
+        "subject_token":      subject_token,         # must be a JWT — see subject_token_for
+        "subject_token_type": SUBJECT_TOKEN_TYPE,    # per-IdP URN, provided by Libra
+        "audience":           "https://embedded.libratech.ai/api",
+        "scope":              "openid email profile",
+        "client_id":          CLIENT_ID,             # M2M creds, delivered privately
+        "client_secret":      CLIENT_SECRET,
+        "product_id":         PRODUCT_ID,
+        "correlation_id":     cid,
+    })
+
+
+def classify_failure(res):
+    # Turn a failed exchange response into a stable reason code:
+    #
+    #   403  → a CTE deny. error_description has the form "<reason>:<base64 details>";
+    #          the reason is the text before the first colon — e.g. user_not_found,
+    #          invalid_subject_token, identity_lookup_error.
+    #   5xx / timeout → Auth0 itself is down or slow.
+    #   anything else (429, network errors) → generic upstream failure.
+    #
+    # NEVER relay error_description to the browser — it can carry internal detail.
+    # Surface only the reason code.
+    if res.status == 403:
+        return res.json["error_description"].split(":", 1)[0]
+    if res.status >= 500 or res.timed_out:
+        return "auth_unavailable"
+    return "upstream_error"                           # Auth0 429, network errors, anything else
+```
+
+### Notes
+
+- `X-Libra-SDK-Product-ID-Token` is only needed for products whose access token is opaque: `aspi_cz`, `aspi_sk`, and `jogtar_hu`.
+- `X-Correlation-ID` is your trace key: one UUID per request (or echo an inbound one), sent to Auth0 as `correlation_id`, to Libra as the header, and echoed in the error envelope.
+- Never log tokens (log the correlation ID instead), cache SDK responses, share a token across users, persist it, or return any token to the browser.
+- Error monitoring on the BFF is required (Sentry, Crashlytics, Datadog, or equivalent). The SDK only shows a generic error screen, so the BFF is the only place where auth failures are observable. Report every enveloped error and every exhausted retry, tagged with its `correlation_id`. When a user reports a problem, your support and Libra's use that correlation ID to trace the request end to end. Never attach tokens to the report.
 
 ## First-time identity linking
 

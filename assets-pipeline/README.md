@@ -30,15 +30,9 @@ npm install
 npx playwright install chromium
 ```
 
-For a local auth run, prefer shell variables so the credentials are not saved
-in a file:
-
-```bash
-read -r "CAPTURE_ACCOUNT_EMAIL?Capture account email: "
-read -r -s "CAPTURE_ACCOUNT_PASSWORD?Capture account password: "
-printf '\n'
-export CAPTURE_ACCOUNT_EMAIL CAPTURE_ACCOUNT_PASSWORD
-```
+`npm run auth` needs no stored credentials: you type them in the browser window
+it opens. Use your password manager or macOS Passwords to fill them; never
+save them in `auth/.env` or the repo.
 
 ## Capture targets
 

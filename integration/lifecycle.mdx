@@ -60,6 +60,18 @@ Libra.destroy();
 Libra.init({ productId: 'wko_de' });
 ```
 
+### What the user sees
+
+| Your product calls | What the user sees |
+| --- | --- |
+| `init()` | Nothing yet. The SDK makes no network requests until the first `attach()`. |
+| First `attach()` | The SDK window appears over your container with a loading screen until the chat is ready. Signed-out users see the [sign-in screen](/capabilities/sign-in-and-onboarding). If startup fails, an error page appears instead of an empty window. |
+| `attach()` after a page reload | The user's last active chat reopens. |
+| `detach()` | The SDK window disappears. The next `attach()` shows the same conversation, scroll position, and any answer still being written, even in a different container. |
+| `destroy()` | The SDK window is removed. |
+
+If your container leaves the page, for example on a route change, the SDK window disappears until you call `attach()` again.
+
 ## Mounting and positioning
 
 By default, the SDK appends its fixed-position wrapper to `document.body`. Set `mountTarget` when the host needs the wrapper to participate in a product-owned stacking context, and lower `zIndex` from its default of `999999` to fit the host's layering:
@@ -78,7 +90,7 @@ Some CSS properties on the target or its ancestors misplace the wrapper. See [Em
 
 ## Header ownership
 
-Providing `onClose` enables the SDK-rendered Libra header and its close button. The host still owns the surrounding panel or modal and should hide it before or while calling `Libra.detach()`, as in the [minimum lifecycle](#minimum-lifecycle) example.
+Providing `onClose` enables the SDK-rendered Libra header and its close button. Users then see a header with the Libra wordmark and a close button above the chat; without `onClose`, there's no Libra header. The host still owns the surrounding panel or modal and should hide it before or while calling `Libra.detach()`, as in the [minimum lifecycle](#minimum-lifecycle) example.
 
 If the host already renders a product-aligned header, omit `onClose` and call `Libra.detach()` from the host's own close control. The callback controls the outer SDK header only; it does not replace the authenticated chat controls. See [SDK window and header](/capabilities/sdk-window) for what users see.
 
@@ -99,20 +111,8 @@ As a result:
 - Clearing site data, or calling `localStorage.clear()` in host code, signs the user out and forgets the last chat.
 - Scripts on your page can read the sign-in token. See [Deployment security](/integration/deployment-security#security-boundaries).
 
-## Configuration at a glance
+## Product ID
 
-| Option | Purpose | Default or requirement |
-| --- | --- | --- |
-| `productId` | Identifies the product represented by the integration: a legal-research product, a legal software product, `ra_micro`, or `libra` for Libra's own test integrations. | Required. |
-| `researchSources` | Pre-selects granular research sources. | `[]`; users can still change selections. |
-| `baseUrl` | Sets the Libra Workspace URL for authentication and main-app handoffs. | `https://app.libratech.ai`. See [Trusted origins](/integration/trusted-origins). |
-| `proxy` | Routes API requests through a host-owned BFF. | Optional. See [BFF and proxy authentication](/integration/bff-authentication). |
-| `mountTarget` | Chooses the parent for the SDK wrapper. | `document.body`; set once during `init()`. |
-| `zIndex` | Controls the wrapper's stacking order within its mount context. | `999999`. |
-| `locale` and `locales` | Select the initial locale and register additional locale bundles. | Optional. See [Locales](/integration/locales). |
-| `onClose` | Receives the SDK header close action and enables the SDK header. | Optional; the host owns wrapper visibility and `detach()`. |
-| `onAuthStateChange` | Receives restored, signed-in, signed-up, or signed-out state changes. | Optional. See [Authentication](/integration/authentication). |
-| `onAuthError` | Receives interactive sign-in or sign-up failures. | Optional. See [Authentication](/integration/authentication). |
-| `onCitationClick` | Lets the host claim supported citation navigation with `preventDefault()`. | Optional; the SDK opens unclaimed HTTP(S) citations in a new tab. See [Host integrations](/integration/host-integrations#citation-ownership). |
+`productId` is required. It identifies the product the integration represents: a legal-research product, a legal software product, `ra_micro`, or `libra` for Libra's own test integrations. `researchSources` is separate: it lists the more granular searchable sources selected in the chat. The complete identifier lists and the public signatures are in the [API reference](/reference/overview).
 
-`productId` identifies the integration product; `researchSources` identifies the more granular searchable sources available to the chat. The complete identifier lists and the public signatures are in the [API reference](/reference/overview).
+For every option and method your product can set, with defaults, see [What you can configure](/integration/configuration).
