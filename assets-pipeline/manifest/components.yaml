@@ -39,7 +39,7 @@
 # The SDK release the published docs describe. `capture --target release`
 # loads /versions/v<sdkVersion>/ and refuses assets from any other SDK build.
 # captures.json records the build each asset came from.
-sdkVersion: 0.15.1
+sdkVersion: 0.16.0
 
 # Fields merged into the signed-in user the SDK loads (GET /api/v1/auths/)
 # during captures, so screenshots show a generic person. The account is not
@@ -216,8 +216,8 @@ components:
       - waitForHidden: 'text="New project"'
       - wait: 1500
       - click: '#tools-dropdown-button'
-      - click: 'button:has-text("Create new")'
-      - waitFor: 'text="Draft document"'
+      - click: 'button:has-text("Start drafting")'
+      - waitFor: 'text="PowerPoint"'
       - wait: 800
     selector: iframe
     output: images/capabilities/tools-create-new.png
@@ -231,7 +231,7 @@ components:
       - click: '#project-selector >> text="Demo Project"'
       - waitForHidden: 'text="New project"'
       - wait: 1500
-      - press: { selector: '#research-button-open-dropdown', key: Enter }
+      - click: '[data-testid="research-trigger-chevron"]'
       - waitFor: 'text="View all Libra integrations"'
       - wait: 800
     selector: iframe
@@ -357,6 +357,8 @@ components:
       - selector: 'button[aria-label="Regenerate"]'
         at: below
       - selector: 'button[aria-label="Export"]'
+        at: below
+      - selector: 'button[aria-label="Save to"]'
         at: below
       - selector: 'button[aria-label="Create email"]'
         at: below
@@ -485,7 +487,7 @@ components:
       - frame: page
       - click: '#set-suggestion'
       - frame: iframe
-      - waitFor: 'button:has-text("Amtsgericht")'
+      - waitFor: '[data-testid="attachment-suggestion"]'
       - wait: 1500
     selector: iframe
     output: images/capabilities/suggestion.png
@@ -500,9 +502,9 @@ components:
       - frame: page
       - click: '#set-suggestion'
       - frame: iframe
-      - click: 'button:has-text("Amtsgericht")'
+      - click: '[data-testid="attachment-suggestion-attach"]'
       - waitFor: 'text=Clear all'
-      # Move the pointer off the chip so its tooltip closes.
+      # Move the pointer off the attachment so its tooltip closes.
       - hover: 'text=How can Libra help you?'
       - wait: 3000
     selector: iframe
