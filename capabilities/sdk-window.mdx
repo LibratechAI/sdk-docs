@@ -8,6 +8,16 @@ import { screenshotMarkers } from "/snippets/screenshot-markers.jsx"
 
 Your product decides when and where the SDK window opens, how wide it is, and whether users can resize it. Hiding and showing the window keeps the chat session.
 
+## The Libra button
+
+Users open the SDK window with a Libra button in your product. The SDK doesn't render this button: your product builds it, places it, and calls `Libra.attach()` when users select it.
+
+- **Brand it as Libra**, so users recognize the entry point.
+- **Place it where it fits your layout**, and keep it in the same place on every page, so users can always find it.
+- **Put it in your product's header.** Many products already do. Avoid a floating button: in the first integrations, users tended to overlook floating buttons.
+
+See the [Quickstart](/integration/quickstart) for a minimal button that opens and closes the SDK window.
+
 ## The header
 
 <AnnotatedImage

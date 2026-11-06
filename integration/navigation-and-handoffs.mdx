@@ -1,9 +1,9 @@
 ---
 title: "Navigation and handoffs"
-description: "Open an existing Libra chat and define ownership for citation and document navigation."
+description: "Open an existing Libra chat or start a new one, and define ownership for citation and document navigation."
 ---
 
-The SDK can open an existing Libra chat in the embedded session. Product navigation outside the chat remains host-owned.
+The SDK can open an existing Libra chat or start a new one in the embedded session. Product navigation outside the chat remains host-owned.
 
 ## Open a chat by ID
 
@@ -36,6 +36,27 @@ if (chatId) {
 
 The user then sees the cited document in your product with the conversation that cited it.
 
+## Start a new chat
+
+By default, the SDK reopens the user's last active chat after a page reload. To show a blank chat when your page starts the SDK, set `restorePreviousChat: false` in `Libra.init()`:
+
+```ts
+Libra.init({
+	productId: 'wko_de',
+	restorePreviousChat: false
+});
+```
+
+To reset a chat that's already loaded, for example from your own **New chat** button, call `Libra.startNewChat()`:
+
+```ts
+newChatButton.addEventListener('click', async () => {
+	await Libra.startNewChat();
+});
+```
+
+Call `startNewChat()` only after the chat has loaded; to start the first session blank, use `restorePreviousChat: false` instead. Libra creates the chat when the user sends the first message. `detach()` followed by `attach()` keeps the current chat in either case.
+
 ## Citation handoffs
 
 Use `onCitationClick` when a host viewer or main application should own research-source navigation. Claim only the sources your host can resolve, and leave the rest untouched so the SDK opens them in a new tab. See [Citation ownership](/integration/citation-clicks) for the payload, example, and checklist.
@@ -46,9 +67,9 @@ Use `onCitationClick` when a host viewer or main application should own research
 The current public SDK does not provide arbitrary main-app routing, generated-document handoff callbacks, or a general navigation API. Keep those routes and controls in the host application.
 </Note>
 
-The public `0.15.1` SDK exposes `openChatById()` and citation interception, but it does not expose a separate main-app navigation method or generated-document handoff callback. A host that needs those flows should keep the surrounding control and navigation in its own application, then use a normal host-owned link or action.
+The public `0.16.0` SDK exposes `openChatById()`, `startNewChat()`, and citation interception, but it does not expose a separate main-app navigation method or generated-document handoff callback. A host that needs those flows should keep the surrounding control and navigation in its own application, then use a normal host-owned link or action.
 
-The `ExternalDocument.url` field is the navigation target for a suggested document chip. It is opened by the host or by the SDK's document-chip behavior according to the product flow; it is not a generated-document API. Do not document internal viewer messages or generated-document implementation details as supported host contracts.
+The `ExternalDocument.url` field is the navigation target for a document chip in the chat input. It is opened by the host or by the SDK's document-chip behavior according to the product flow; an indexed legal software document opens in the Document Viewer instead. It is not a generated-document API. Do not document internal viewer messages or generated-document implementation details as supported host contracts.
 
 ## Ownership checks
 

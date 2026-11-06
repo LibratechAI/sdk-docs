@@ -3,7 +3,7 @@ title: "Quickstart"
 description: "Install or load the Libra SDK and attach it to a visible host container."
 ---
 
-This Quickstart uses the reviewed release baseline `@libra/sdk` `0.15.1`. Production promotion status is separate and should be confirmed before publishing a production-specific version.
+This Quickstart uses the reviewed release baseline `@libra/sdk` `0.16.0`. Production promotion status is separate and should be confirmed before publishing a production-specific version.
 
 ## Prerequisites
 
@@ -28,7 +28,7 @@ This Quickstart uses the reviewed release baseline `@libra/sdk` `0.15.1`. Produc
         Install the current staging baseline:
 
         ```bash
-        npm install @libra/sdk@0.15.1
+        npm install @libra/sdk@0.16.0
         ```
 
         The package includes an ES module for `import`, a UMD build for `require`, and TypeScript declarations. Locale bundles are imported separately; see [Locales](/integration/locales).
@@ -37,14 +37,14 @@ This Quickstart uses the reviewed release baseline `@libra/sdk` `0.15.1`. Produc
         Use the versioned ESM bundle in a module-supporting browser. There's nothing to install; you import it in step 3.
 
         ```text
-        https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.1/libra.js
+        https://cdn.wolterskluwer.io/wk/libra-sdk/0.16.0/libra.js
         ```
       </Tab>
       <Tab title="CDN: classic script">
         Use the UMD bundle when the host does not use JavaScript modules. Add the script tag to the page:
 
         ```html
-        <script src="https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.1/libra.umd.js"></script>
+        <script src="https://cdn.wolterskluwer.io/wk/libra-sdk/0.16.0/libra.umd.js"></script>
         ```
       </Tab>
     </Tabs>
@@ -54,6 +54,8 @@ This Quickstart uses the reviewed release baseline `@libra/sdk` `0.15.1`. Produc
     <button id="open-chat" type="button">Open Libra</button>
     <div id="libra-panel" style="width: 400px; height: 600px;"></div>
     ```
+
+    The button is yours to design and place. See [The Libra button](/capabilities/sdk-window#the-libra-button) for the recommended branding and placement.
   </Step>
   <Step title="Initialize once, then attach when the user opens the panel">
     <Tabs>
@@ -83,7 +85,7 @@ This Quickstart uses the reviewed release baseline `@libra/sdk` `0.15.1`. Produc
       <Tab title="CDN: ES module">
         ```html
         <script type="module">
-          import { Libra } from 'https://cdn.wolterskluwer.io/wk/libra-sdk/0.15.1/libra.js';
+          import { Libra } from 'https://cdn.wolterskluwer.io/wk/libra-sdk/0.16.0/libra.js';
 
           const panel = document.getElementById('libra-panel');
 

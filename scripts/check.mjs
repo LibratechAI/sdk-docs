@@ -5,12 +5,14 @@
 //   - every internal link, image, and video on a page resolves
 //   - every redirect points to a page and doesn't shadow one
 //   - no home-folder paths in published pages
+//   - version-switcher.js matches the versions in docs.json
 // Exit 1 on errors.
 
 import { readFile, readdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { SWITCHER_FILE, switcherSource } from "./version-switcher.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 // Not reader pages: tooling, internal notes, and asset folders (see .mintignore).
@@ -70,6 +72,10 @@ for (const r of docs.redirects ?? []) {
   if (!pageExists(r.destination)) errors.push(`redirect ${r.source} -> ${r.destination}: destination is not a page`);
   if (pageExists(r.source)) errors.push(`redirect ${r.source}: source is an existing page, so the redirect hides it`);
 }
+
+try {
+  if ((await readFile(SWITCHER_FILE, "utf8").catch(() => "")) !== switcherSource(docs)) errors.push("version-switcher.js is out of date; run node scripts/version-switcher.mjs");
+} catch (e) { errors.push(e.message); }
 
 // CI installs from the public registry; locally npm maps registry.npmjs.org to the configured mirror.
 for (const lock of ["package-lock.json", "assets-pipeline/package-lock.json"]) {

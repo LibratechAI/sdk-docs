@@ -3,7 +3,7 @@ title: "Attachments and availability"
 description: "What your product can pass to Libra, and when Libra can use it."
 ---
 
-Your product can pass documents and files into the chat in two ways: [suggest one](/integration/suggestions) for the user to attach, or [add them directly](/integration/add-attachments). Both take the same `Attachment` objects and follow the same availability rules. The SDK owns the chat UI; your product owns document identity, permissions, and URLs.
+Your product can pass documents and files into the chat in two ways: [suggest them](/integration/suggestions) for the user to attach, or [add them directly](/integration/add-attachments). Both take the same `Attachment` objects and follow the same availability rules. The SDK owns the chat UI; your product owns document identity, permissions, and URLs.
 
 ## Attachment types
 
@@ -43,14 +43,16 @@ The SDK checks each group, a document plus its nested `attachments`, against you
 
 | Method | When the check runs | If the group is unavailable |
 | --- | --- | --- |
-| `setSuggestedAttachment()` | In the background while the chip is visible. | Selecting the chip attaches nothing and shows a **Content unavailable** notice. |
+| `setSuggestedAttachments()` | In the background while the suggestion card is visible. | After **Attach**, the group appears in the chat input, disabled, and blocks sending until the user removes it. A notice offers **Try again** and **Remove**. |
 | `addAttachments()` | Right away. The attachments show a loading state, and sending waits for the check. | The group stays in the chat input, disabled, and blocks sending until the user removes it. A notice offers **Try again** and **Remove**. |
 
 `HostFile` entries skip the check and upload right away.
 
 ### Legal software documents
 
-Legal software sources (`kleos`, `legisway`, `notaionext`, `suitenext`) aren't in the FAB index. Libra links the document into the active project's Chat uploads folder and starts indexing it. It's available when indexing finishes. It's disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing doesn't finish within 90 seconds. A suggested legal software document is linked, and indexed, only when the user selects its chip, because linking adds a file to the user's project.
+Legal software sources (`kleos`, `legisway`, `notaionext`, `suitenext`) aren't in the FAB index. Libra links the document into the active project's Chat uploads folder and starts indexing it. It's available when indexing finishes. It's disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing doesn't finish within 90 seconds. A suggested legal software document is linked, and indexed, only when the user selects **Attach**, because linking adds a file to the user's project.
+
+Once Libra has indexed it, selecting the attached document opens it in the [Document Viewer](/capabilities/document-viewer) instead of opening `url` in a new tab.
 
 The SDK doesn't expose these checks or their results to your product. Make sure the research documents you suggest or attach are in your FAB index, keep product permissions and entitlement decisions in your product, and don't depend on the internal availability request or response shape.
 

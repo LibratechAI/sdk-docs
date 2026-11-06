@@ -16,8 +16,10 @@ Adapted from `LibratechAI/documentation`'s `weekly-docs-update` skill, but:
 
 ## Mental model
 
-- **A release is an `sdk-v*` tag on `main` in `LibratechAI/sandbox`.** The SDK
-  UI ships inside the npm/CDN bundle, so a `packages/sdk` commit on `main`
+- **A release is an `sdk-v*` tag in `LibratechAI/sandbox`.** The SDK team tags
+  it on `staging` and publishes it to npm and the CDN from the tag, before
+  `main` catches up. The SDK UI ships inside the npm/CDN bundle, so a
+  `packages/sdk` commit reaches integrators only when a release is tagged.
   reaches integrators only when a release is tagged. Until then it sits under
   **Unreleased** in `packages/sdk/CHANGELOG.md`.
 - **The docs describe the version in `sdkVersion`** (`assets-pipeline/manifest/components.yaml`).
@@ -27,9 +29,10 @@ Adapted from `LibratechAI/documentation`'s `weekly-docs-update` skill, but:
   unreleased changes. Published docs use `/versions/v<sdkVersion>/`.
 - **Edit a page → queue its assets.** If a release changed what a playground
   component looks like or does, its docs screenshot is stale.
-- **The changelog is an exact copy** of `packages/sdk/CHANGELOG.md` on the
-  sandbox `staging` branch (the staging changelog page), including
-  **Unreleased** and upstream typos. Never edit its text; regenerate it.
+- **The changelog is an exact copy** of the released versions in
+  `packages/sdk/CHANGELOG.md` on the sandbox `staging` branch (the staging
+  changelog page), including upstream typos. **Unreleased** and any version
+  without a release tag stay out. Never edit its text; regenerate it.
 - **Nothing is committed without approval.** Pushing `main` publishes the site.
 
 ## Prerequisites
@@ -49,14 +52,15 @@ Adapted from `LibratechAI/documentation`'s `weekly-docs-update` skill, but:
 
 ### 1. Sync sources
 ```bash
-git -C "$SANDBOX_PATH" fetch origin
+git -C "$SANDBOX_PATH" fetch origin main staging --tags
 ```
 
 ### 2. Check for a new release
 ```bash
 node scripts/sdk-release-scan.mjs --write-queue
 ```
-The scan compares `sdkVersion` with the newest `sdk-v*` tag on `main`.
+The scan compares `sdkVersion` with the newest `sdk-v*` tag. Confirm a new
+release on the CDN (`https://cdn.wolterskluwer.io/wk/libra-sdk/<version>/libra.js`).
 
 - **"No new SDK release since X"**: stop. Nothing is published today. The
   printed **Unreleased** section is for the pre-release track only (see Known
@@ -64,7 +68,8 @@ The scan compares `sdkVersion` with the newest `sdk-v*` tag on `main`.
 - **New release(s)**: the scan prints each release's section from
   `packages/sdk/CHANGELOG.md`, the released `packages/sdk` commits bucketed by
   docs area (`SCOPE_MAP`), and the pages to review on every release. With
-  `--write-queue` it writes `assets-pipeline/.capture-queue.json` for areas
+  `--write-queue` it writes `assets-pipeline/.capture-queue.json` (local and
+  gitignored) for areas
   that need fresh playground captures. Continue on a new docs branch, for
   example `docs/sdk-<version>`. If several releases shipped, document the
   newest; freeze only the version the docs described.
@@ -81,13 +86,15 @@ The scan compares `sdkVersion` with the newest `sdk-v*` tag on `main`.
   out and flag it for review.
 
 ### 4. Freeze the version the docs described
+First rename the latest entry in `docs.json` `navigation.versions` to `<new>`
+(keep `"tag": "Latest"`); the script refuses a version that is still in the
+switcher. Then:
 ```bash
 node scripts/snapshot-docs-version.mjs <old>
 ```
 This copies the current pages to `versions/v<old>/`, together with the images, videos,
-and screenshot markers they use, and adds `<old>` to the version switcher. Then
-rename the latest entry in `docs.json` `navigation.versions` to `<new>` (keep
-`"tag": "Latest"`).
+and screenshot markers they use, adds `<old>` to the version switcher with its own
+**Playground** and **Changelog** anchors, and regenerates `version-switcher.js`.
 
 ### 5. Bump version strings
 - Set `sdkVersion: <new>` in `assets-pipeline/manifest/components.yaml`.
@@ -104,8 +111,9 @@ rename the latest entry in `docs.json` `navigation.versions` to `<new>` (keep
 node scripts/sync-changelog.mjs           # from origin/staging in $SANDBOX_PATH
 node scripts/sync-changelog.mjs --check   # confirms it matches
 ```
-The text is copied word for word, including **Unreleased** and typos. Run it
-on every daily check, not only on releases, so Unreleased stays current.
+The text is copied word for word, including typos. The script leaves out
+**Unreleased** and any version newer than the newest `sdk-v*` tag, so the
+docs list only what integrators can install. Run it on every release.
 
 ### 7. Update affected pages
 - Edit the pages listed for each bucket in the scan. The Capabilities page and
@@ -142,7 +150,7 @@ npm run validate       # every output referenced; warns about stale captures
 npm run compose:hero   # only if sdk-home was recaptured: rebuilds the Welcome image
 ```
 Open and check every new capture. The release target refuses assets from any
-other SDK build.
+other SDK build. When every queued area is recaptured, delete `.capture-queue.json`.
 
 ### 10. Verify
 ```bash
@@ -192,6 +200,7 @@ approves.** After approval, a typical split is:
 
 - [scripts/sdk-release-scan.mjs](../../../scripts/sdk-release-scan.mjs) — the release scanner.
 - [scripts/snapshot-docs-version.mjs](../../../scripts/snapshot-docs-version.mjs) — freezes a version for the switcher.
+- [scripts/version-switcher.mjs](../../../scripts/version-switcher.mjs) — regenerates `version-switcher.js`, which keeps readers on the same page when they switch versions.
 - [assets-pipeline/README.md](../../../assets-pipeline/README.md) — the capture pipeline reference.
 - `LibratechAI/documentation`'s `weekly-docs-update` and `capture-from-worklist`
   skills — the pattern this was adapted from.

@@ -19,7 +19,7 @@ The host controls the surrounding layout, document permissions, and any navigati
 The current public SDK does not provide a standalone viewer-mount API. Internal iframe synchronization, viewer messages, frame selectors, and layout protocols are implementation details, not host integration contracts.
 </Note>
 
-The public SDK does not export a standalone viewer constructor, viewer mount API, or generated-document handoff callback in the `0.15.1` baseline. Internal viewer synchronization messages and snapshots are implementation details and are not a host integration contract.
+The public SDK does not export a standalone viewer constructor, viewer mount API, or generated-document handoff callback in the `0.16.0` baseline. Internal viewer synchronization messages and snapshots are implementation details and are not a host integration contract.
 
 If the product needs a generated document or a product-specific viewer route, keep that handoff in the host application. Use a host-owned action or claim a citation with `onCitationClick`; do not depend on internal iframe messages.
 

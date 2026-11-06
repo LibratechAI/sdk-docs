@@ -7,7 +7,12 @@ The SDK handles sign-in for your product. Users with a valid session go straight
 
 <Steps>
   <Step title="Welcome screen">
-    Users without a session see the Libra welcome screen in the SDK window.
+    Users without a session see the Libra welcome screen in the SDK window. Your product picks its description with `welcomeDescription` in `Libra.init()`; Libra writes and translates the text:
+
+    | `welcomeDescription` | Description | Use it for |
+    | --- | --- | --- |
+    | `'default'` | "Research legal cases faster with AI built for lawyers." | Products for lawyers |
+    | `'trustedContent'` | "Combine the power of AI with trusted content." | Products whose users aren't lawyers |
 
     <Frame>
       <img src="/images/capabilities/sign-in.png" alt="Libra welcome screen with Sign in and Start free trial buttons" style={{ maxWidth: 300 }} />
@@ -28,7 +33,7 @@ The SDK handles sign-in for your product. Users with a valid session go straight
   <Step title="Onboarding">
     New accounts complete onboarding in the SDK window before the chat appears:
 
-    1. **Personal info:** name, role, team size, country of registration, how they heard about Libra, and an optional phone number.
+    1. **Personal info:** name, role, team size, country of registration, how they heard about Libra, and a phone number. The phone number is required for some countries of registration, such as Poland and Romania, and optional for the rest. Libra sets the list, so it can change without an SDK update.
     2. **Account and workspace:** jurisdictions of practice, workspace language, and newsletter.
     3. **Team:** invite colleagues. Only users who start a new team see this step.
     4. **Email verification:** shown until the user verifies their email.

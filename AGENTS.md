@@ -68,7 +68,7 @@ weekly pipeline:
 
 1. [scripts/sdk-release-scan.mjs](scripts/sdk-release-scan.mjs) compares the
    documented `sdkVersion` with the newest release tag and lists that release's
-   changelog and SDK-scoped commits. Unreleased commits on `main` are not published.
+   changelog and SDK-scoped commits. Commits without a release tag are not published.
 2. On a new release, the previous version is frozen for the version switcher, and
    affected pages and `changelog.mdx` are updated.
 3. Any docs area whose UI changed is queued in `assets-pipeline/.capture-queue.json`

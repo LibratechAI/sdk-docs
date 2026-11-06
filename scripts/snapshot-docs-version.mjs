@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 // Freezes the current (latest) docs as a version in the version switcher.
 //
-// Run it right before the docs move to a new SDK release:
+// Run it when the docs move to a new SDK release, after renaming the latest
+// version in docs.json to the new release:
 //   node scripts/snapshot-docs-version.mjs 0.15.1
 // It copies every page of the latest version in docs.json to versions/v<version>/,
-// points internal links in the copies at that folder, and adds the version
-// to the switcher. Then bump the latest version's label in docs.json.
+// points internal links and the top anchors in the copies at that folder, adds the
+// version to the switcher, and regenerates version-switcher.js.
 // Images, videos, and screenshot markers the pages use are copied into the same
 // folder, so later recaptures can't change a frozen version. To freeze the
 // assets of an existing snapshot:
@@ -15,6 +16,7 @@ import { existsSync } from "node:fs";
 import { copyFile, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { writeSwitcher } from "./version-switcher.mjs";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const DOCS_JSON = path.join(REPO_ROOT, "docs.json");
@@ -119,6 +121,12 @@ const prefixGroups = (items) =>
   items.map((p) => (typeof p === "string" ? `${prefix}/${p}` : { ...p, pages: prefixGroups(p.pages ?? []) }));
 const snapshot = {
   version,
+  global: {
+    anchors: (latest.global?.anchors ?? []).map((a) => {
+      const target = a.href?.startsWith("/") && a.href.slice(1);
+      return target && pageSet.has(target) ? { ...a, href: `/${prefix}/${target}` } : a;
+    }),
+  },
   groups: latest.groups.map((g) => ({ ...g, pages: prefixGroups(g.pages ?? []) })),
 };
 
@@ -131,4 +139,5 @@ const at = versions.findIndex((v, i) => i > 0 && newer(v.version, version) < 0);
 versions.splice(at === -1 ? versions.length : at, 0, snapshot);
 
 await writeFile(DOCS_JSON, `${JSON.stringify(docs, null, 2)}\n`);
+await writeSwitcher(docs);
 console.log(`Copied ${pages.length} pages to ${prefix}/ and added ${version} to the version switcher.`);

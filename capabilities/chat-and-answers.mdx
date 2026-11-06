@@ -20,18 +20,17 @@ Users type a task in the chat input, can improve the prompt before sending it, a
     { title: "Copy", text: "copies the answer." },
     { title: "Regenerate", text: "generates a new answer." },
     { title: "Export", text: "saves the message or the whole chat as Word or PDF." },
+    { title: "Save to", text: "saves the answer to a document management system, such as Kleos. Shown only when the user's account can save to one." },
     { title: "Create email", text: "drafts an email from the answer." },
     { title: "Open in editor", text: "opens the answer in the drafting editor in Libra Workspace, in a new tab." },
   ]}
 >
-  <img src="/images/capabilities/answer-actions.png" alt="An answer with document citations, the answer actions, and suggested next steps" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(127,127,127,.25)" }} />
+  <img src="/images/capabilities/answer-actions.png" alt="An answer with document citations and the answer actions" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(127,127,127,.25)" }} />
 </AnnotatedImage>
 
-Suggested next steps appear below the answer.
-
 <Columns cols={2}>
-  <Frame caption="Export options: references, Word or PDF, and this message or the whole chat.">
-    <img src="/images/capabilities/export-menu.png" alt="Export menu with reference, format, and scope options" />
+  <Frame caption="Export message: drafting template, theme, Word or PDF, footnotes, and this message or the whole chat. Users can also open the result in the editor or save it to the project.">
+    <img src="/images/capabilities/export-menu.png" alt="Export message dialog with drafting template, theme, format, footnotes, and scope options" />
   </Frame>
   <Frame caption="Chat mode: Standard, Deep Thinking, or Fast.">
     <img src="/images/capabilities/model-tier.png" alt="Chat mode menu with Standard, Deep Thinking, and Fast options" />

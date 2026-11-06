@@ -19,7 +19,8 @@ on staging/prod. So this pipeline is split in two:
 
 The release scanner ([scripts/sdk-release-scan.mjs](../scripts/sdk-release-scan.mjs))
 never logs in itself — it only decides *which* components need a fresh
-capture and records that in `.capture-queue.json`. A human (or a scheduled
+capture and records that in `.capture-queue.json`, a local, gitignored
+worklist that nothing reads automatically. A human (or a scheduled
 job with a still-valid session) runs `capture` afterwards.
 
 ## Setup

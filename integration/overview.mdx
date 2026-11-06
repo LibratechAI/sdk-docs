@@ -44,8 +44,8 @@ This guide is for engineers and QA. To see what users experience first, read [Ca
   <Card title="Attachments and availability" icon="file-check" href="/integration/attachments">
     Attachment types, the FAB index, and who indexes what.
   </Card>
-  <Card title="Suggest an attachment" icon="file-plus" href="/integration/suggestions">
-    Offer the document the user is viewing as a chip above the chat input.
+  <Card title="Suggest attachments" icon="file-plus" href="/integration/suggestions">
+    Offer the documents the user is viewing or has selected as a card above the chat input.
   </Card>
   <Card title="Add attachments" icon="paperclip" href="/integration/add-attachments">
     Attach documents or files directly, and remove them again.
@@ -54,7 +54,7 @@ This guide is for engineers and QA. To see what users experience first, read [Ca
     Open cited research documents in your own viewer.
   </Card>
   <Card title="Navigation and handoffs" icon="external-link" href="/integration/navigation-and-handoffs">
-    Open an existing chat and keep product-owned navigation in the host.
+    Open an existing chat or start a new one, and keep product-owned navigation in the host.
   </Card>
   <Card title="Locales" icon="languages" href="/integration/locales">
     npm and CDN locale loading and runtime changes.
@@ -96,6 +96,6 @@ Most of the integration is the same for every product. These parts differ betwee
 | Can Libra use the document? | Only if it's already in your product's **FAB index**. Libra checks, but doesn't index. | Libra links it into the user's active project and indexes it, within 90 seconds. |
 | When a suggestion is checked or linked | Checked in the background while the chip is visible | Linked only when the user selects the chip |
 
-Details: [Product ID](/integration/lifecycle#product-id), [Attachments and availability](/integration/attachments), [Suggest an attachment](/integration/suggestions), and [Add attachments](/integration/add-attachments). The code examples on those pages have a tab for each product type.
+Details: [Product ID](/integration/lifecycle#product-id), [Attachments and availability](/integration/attachments), [Suggest attachments](/integration/suggestions), and [Add attachments](/integration/add-attachments). The code examples on those pages have a tab for each product type.
 
 For every product type, users can attach their own files, and the [Document Viewer](/capabilities/document-viewer) opens uploaded and generated documents beside the SDK window, including in chats reopened from history. A product without its own document source, such as `ra_micro`, can pass files with `HostFile`.

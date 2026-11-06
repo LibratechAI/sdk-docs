@@ -1,9 +1,9 @@
 ---
 title: "Add attachments"
-description: "Attach documents or files to the chat input without a suggestion chip, and remove them again."
+description: "Attach documents or files to the chat input without a suggestion, and remove them again."
 ---
 
-Use `Libra.addAttachments()` to attach one or more items to the current chat input without a suggestion chip. Use `Libra.clearAttachments()` to remove every attachment your product added. See [Attachments and availability](/integration/attachments) for the attachment types.
+Use `Libra.addAttachments()` to attach one or more items to the current chat input without a suggestion card. Use `Libra.clearAttachments()` to remove every attachment your product added. See [Attachments and availability](/integration/attachments) for the attachment types.
 
 <Tabs>
   <Tab title="Research product">
@@ -60,7 +60,7 @@ One call can mix documents and host files. Each document, with its nested `attac
 - A notice above the chat input says how many files couldn't be attached, with **Try again** (checks the failed groups again) and **Remove**. It hides after 6 seconds and appears again on the next failure.
 - Documents already in the chat input are skipped. Adding a disabled document again checks it again. Entries missing a required field are ignored and logged in the console.
 - A `HostFile` skips the check. It's uploaded right away into the user's active project and shows as an ordinary file while it uploads. The same rules apply as for a file the user picks: a project is required, size and type limits apply, and if document uploads are turned off for the user's account, the file isn't added. A file still queued with the same name and size isn't queued twice.
-- A legal software document shows a loading state while Libra indexes it, then becomes available, or disabled if it can't be used.
+- A legal software document shows a loading state while Libra indexes it, then becomes available, or disabled if it can't be used. Once it's available, selecting it opens it in the [Document Viewer](/capabilities/document-viewer).
 
 ## Remove attachments
 
@@ -70,6 +70,6 @@ Call `Libra.clearAttachments()` when the context in your product changes:
 await Libra.clearAttachments();
 ```
 
-It removes every document your product added, including ones the user attached from the suggestion chip and ones still being checked, and cancels a chip selection that hasn't finished. Files the user uploaded or picked stay, and sent messages don't change. Host files become regular uploads once attached, so `clearAttachments()` doesn't remove them.
+It removes every document your product added, including ones the user attached from the suggestion card and ones still being checked. Files the user uploaded or picked stay, and sent messages don't change. Host files become regular uploads once attached, so `clearAttachments()` doesn't remove them.
 
-To let the user decide whether to attach a document, see [Suggest an attachment](/integration/suggestions).
+To let the user decide whether to attach documents, see [Suggest attachments](/integration/suggestions).

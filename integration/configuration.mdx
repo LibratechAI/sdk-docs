@@ -5,7 +5,7 @@ description: "See what your product can change in the SDK, what Libra sets for y
 
 Your product configures the SDK in `Libra.init()` and with a few methods. Some behavior is set by Libra for your product or the user's account, and some can't be changed. Each row links to the page that explains it in full.
 
-To try the options without writing code, use **Init config** in the [Playground](/integration/playground): change the product, research sources, locale, `zIndex`, and `onClose`, then copy the matching `Libra.init()` call.
+To try the options without writing code, use **Init config** in the [Playground](/integration/playground): change the product, research sources, locale, `zIndex`, the suggestion label, the welcome description, chat restoration, and `onClose`, then copy the matching `Libra.init()` call.
 
 ## Set in your code
 
@@ -18,11 +18,13 @@ To try the options without writing code, use **Init config** in the [Playground]
 | Where the SDK window sits in your page | `attach()`, `mountTarget`, `zIndex` | Mounted on `document.body` with `z-index: 999999` | [Mounting and positioning](/integration/lifecycle#mounting-and-positioning) |
 | Whether the Libra header with a close button appears | `onClose` | No Libra header | [Header ownership](/integration/lifecycle#header-ownership) |
 | Which language the SDK uses | `locale`, `locales`, `setLocale()` | The browser's language if registered, otherwise `en-US` | [Locales](/integration/locales) |
+| Which description the sign-in screen shows | `welcomeDescription` | `'default'`, written for lawyers | [Sign-in and onboarding](/capabilities/sign-in-and-onboarding) |
 | How your product reacts to sign-in and sign-out | `onAuthStateChange`, `onAuthError`, `signOut()` | No callbacks | [Authentication](/integration/authentication) |
 | Whether citations open in your own viewer | `onCitationClick` | Citations open in a new tab | [Citation ownership](/integration/citation-clicks) |
-| Whether to offer the document the user is viewing | `setSuggestedAttachment()`, `clearSuggestedAttachment()` | No suggestion | [Suggest an attachment](/integration/suggestions) |
+| Whether to offer documents or files the user is viewing or has selected | `setSuggestedAttachments()`, `clearSuggestedAttachments()` | No suggestion | [Suggest attachments](/integration/suggestions) |
+| How the suggestion card labels its contents | `attachments.suggestionLabel` | `'auto'`: the title for one attachment, a count for several | [Label the card](/integration/suggestions#label-the-card) |
 | Whether to attach documents or files for the user | `addAttachments()`, `clearAttachments()` | Nothing attached | [Attach directly](/integration/add-attachments) |
-| Which chat opens | `openChatById()` | The user's last active chat | [Navigation and handoffs](/integration/navigation-and-handoffs) |
+| Which chat opens | `restorePreviousChat`, `openChatById()`, `startNewChat()` | The user's last active chat | [Navigation and handoffs](/integration/navigation-and-handoffs) |
 
 <Warning>
 **FAB index required.** Research documents you suggest or attach must already be in your product's FAB index. Libra checks the index but doesn't add documents to it. See [Availability boundary](/integration/attachments#availability-boundary).

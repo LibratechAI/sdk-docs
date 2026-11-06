@@ -26,9 +26,10 @@
  *   node scripts/sdk-release-scan.mjs --check-coverage      # exit 1 if a docs.json page has no owner area
  *   node scripts/sdk-release-scan.mjs --branch staging     # pre-release track: SDK commits after the newest release tag
  *
- * Source of truth: released `sdk-v*` tags on origin/main of LibratechAI/sandbox.
- * The SDK UI ships inside the npm/CDN bundle, so a packages/sdk commit on
- * main reaches integrators only when a release is tagged. By default the scan
+ * Source of truth: `sdk-v*` tags in LibratechAI/sandbox. Releases are tagged
+ * on staging and published to npm/CDN from the tag, before main catches up.
+ * The SDK UI ships inside the npm/CDN bundle, so a packages/sdk commit
+ * reaches integrators only when a release is tagged. By default the scan
  * compares the documented `sdkVersion` (assets-pipeline/manifest/components.yaml)
  * with the newest tag and lists the commits and CHANGELOG.md sections in
  * between. With no new release it prints the CHANGELOG "Unreleased" section
@@ -229,7 +230,7 @@ async function documentedVersion() {
 }
 
 function releaseTags(sandbox) {
-  const out = execFileSync("git", ["-C", sandbox, "tag", "--list", "sdk-v*", "--merged", "origin/main"], { encoding: "utf8" });
+  const out = execFileSync("git", ["-C", sandbox, "tag", "--list", "sdk-v*"], { encoding: "utf8" });
   return out.split("\n").map((t) => t.trim()).filter((t) => /^sdk-v\d+\.\d+\.\d+$/.test(t)).map((t) => t.slice(5)).sort(cmpVersion);
 }
 
@@ -340,7 +341,8 @@ async function main() {
   }
 
   const commits = range ? gitLog(args.sandbox, range) : [];
-  const changelogRef = mode === "staging" ? "origin/staging" : "origin/main";
+  const changelogRef = mode === "staging" ? "origin/staging"
+    : mode === "release" && newReleases.length ? `sdk-v${newReleases[newReleases.length - 1]}` : "origin/main";
   const sdkSections = sdkChangelog(args.sandbox, changelogRef);
   const notes = mode === "release" && newReleases.length
     ? newReleases.map((v) => sdkSections.get(v)).filter(Boolean)
