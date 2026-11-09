@@ -1,0 +1,508 @@
+---
+title: "Libra SDK 0.9.0"
+sidebarTitle: "SDK 0.9.0"
+description: "The @libra/sdk 0.9.0 README, as the SDK staging site publishes it."
+---
+
+<Note>
+Full documentation starts with SDK 0.16.0. For 0.9.0, this page shows the SDK README as the [SDK staging site](https://sdk.staging.libratech.ai/versions/v0.9.0/index.html) publishes it. To try this release, use its [playground](https://sdk.staging.libratech.ai/versions/v0.9.0/playground.html).
+</Note>
+
+Embeddable chat widget for integrating Libra's AI-powered legal research into any web application. Ships as a single JavaScript file that renders the full chat interface inside an isolated iframe — no external resources, no CSS conflicts, no setup beyond a single function call.
+
+## Installation
+
+Add the following to your `.npmrc`. You will need an `ARTIFACTORY_TOKEN` environment variable set to your WK Artifactory token.
+
+```
+@libra:registry=https://artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/
+//artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/:_authToken=${ARTIFACTORY_TOKEN}
+```
+
+```bash
+npm install @libra/sdk
+```
+
+## CDN Usage
+
+The same released SDK version is also promoted to WK CDN after a successful Artifactory publish.
+
+### ES module
+
+Example usage in an ES module-supporting environment (e.g. modern browsers, Vite, Webpack 5+):
+
+```html
+<script type="module">
+  import { Libra } from 'https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.js';
+
+  Libra.init({
+    onClose: () => Libra.detach()
+  });
+</script>
+```
+
+### Classic script tag
+
+Example usage in a classic environment without module support:
+
+```html
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.umd.js"></script>
+<script>
+  const { Libra } = window.Libra;
+  Libra.init({
+    onClose: () => Libra.detach()
+  });
+</script>
+```
+
+## Quick Start
+
+Call `Libra.init()` once at app startup, then `Libra.attach()` when the user opens the widget and `Libra.detach()` when they close it. The iframe is created on `init()` but the chat session does not start — and no network requests are made — until the first `attach()`.
+
+```html
+<button id="open-chat">Open Chat</button>
+<div id="chat" style="position: fixed; right: 16px; bottom: 16px; width: 400px; height: 600px;"></div>
+```
+
+```javascript
+import { Libra } from '@libra/sdk';
+
+Libra.init({
+  onClose: () => Libra.detach()
+});
+
+document.getElementById('open-chat').addEventListener('click', () => {
+  Libra.attach('chat');
+});
+```
+
+The SDK creates an iframe on `document.body`, positions it over your container when attached, handles authentication via an Auth0 popup, and renders the chat interface. The session (conversation, scroll position, in-progress streaming) is preserved across `detach()` / `attach()` cycles.
+
+## API Reference
+
+### `Libra.init(config)`
+
+Initializes the SDK and creates the iframe. Call after `document.body` exists. Startup is deferred until the first `attach()`.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `mountTarget` | `string \| HTMLElement` | `document.body` | Element (or its ID) to mount the SDK wrapper into. See [Stacking Context](#stacking-context). |
+| `zIndex` | `number` | `999999` | `z-index` applied to the SDK wrapper. |
+| `baseUrl` | `string` | `"https://app.libratech.ai"` | Libra workspace URL. Used for main-app handoffs (opening settings, manage-team, etc. in a new tab) and as the origin for the auth popup. When `proxy` is set, API requests are routed through the proxy instead — `baseUrl` no longer determines where backend calls go. |
+| `proxy` | `{ url: string; headers?: Record<string, string>; credentials?: RequestCredentials }` | — | Route all SDK API requests through a BFF proxy instead of directly to `baseUrl`. When set, the localStorage token flow is disabled — auth is handled server-side by the proxy. `headers` are merged into every proxied request. `credentials` defaults to `'same-origin'`. See [Proxy Mode](#proxy-mode-bff). |
+| `researchSources` | `ResearchSourceId[]` | `[]` | Pre-selected research sources. |
+| `locale` | `SupportedLocale` | Browser detection | BCP-47 locale code (e.g. `'de-DE'`). Must be registered via `locales` (npm) or a `<script>` tag (CDN) — `init()` throws otherwise. Defaults to browser detection, which falls through to `en-US` when no registered locale matches. See [Locales](#locales). |
+| `locales` | `LibraLocaleBundle[]` | `[]` | Additional locale bundles to register (npm consumers). See [Locales](#locales). |
+| `onClose` | `() => void` | — | Fired when the user clicks the close button in the widget's navbar. |
+| `onAuthStateChange` | `(state: LibraAuthState) => void` | — | Fired after the SDK restores a session, completes an interactive login, or signs out. |
+| `onAuthError` | `(error: LibraAuthError) => void` | — | Fired when an interactive login attempt is unsuccessful. |
+| `onExternalDocumentCitationClick` | `(event: ExternalDocumentCitationClickEvent) => void` | — | Fired when the user clicks a citation badge or navigates to a source via the citation tooltip / list — for external documents provided via `setDocumentSuggestion`. If omitted, the citation link opens in a new tab. |
+
+### `Libra.attach(elementOrId)`
+
+Visually positions the widget over the given target element. The iframe is never moved in the DOM — only its CSS position is updated — so the chat session and any in-progress streaming response are fully preserved across re-attaches. Accepts a DOM element or a string element ID. Can be called while the iframe is still loading.
+
+### `Libra.detach()`
+
+Hides the widget. The iframe stays alive so the session is preserved. Call `attach()` again to reposition it — even to a different container.
+
+### `Libra.setDocumentSuggestion(doc)`
+
+Suggests an external document the user is currently viewing. A suggestion chip ("+ [title]") appears above the message input. When clicked, the document is attached to the message and the LLM can retrieve its content. Calling this again replaces the previous suggestion.
+
+When the LLM cites the document in its response, two affordances let the user navigate back to the source. By default both open in a new tab. Provide `onExternalDocumentCitationClick` in `Libra.init()` to handle navigation inside the host app instead:
+
+- **`type: 'chunk'`** — fired when the user clicks the citation badge or "To source" in the citation tooltip. `event.url` points to the specific cited passage and may carry a `documentAnchor` query parameter for scroll-to-section.
+- **`type: 'document'`** — fired when the user clicks "View source" in the citation list panel. `event.url` is the full document URL.
+
+```javascript
+Libra.setDocumentSuggestion({
+  id: 'doc-uuid-123',
+  title: 'Article 162 [Tort]',
+  url: 'https://research.example.com/document/doc-uuid-123',
+  source: 'wolters_kluwer_de'
+});
+```
+
+### `Libra.clearDocumentSuggestion()`
+
+Clears the current document suggestion (e.g. when the user navigates away from the document).
+
+### `Libra.setLocale(locale)`
+
+Updates the widget's UI language at runtime. Translated strings re-render in place, the chat session is preserved, and the locale is persisted in the iframe's `localStorage`. The target locale must have been registered at init time (see [Locales](#locales)).
+
+```javascript
+Libra.setLocale('de-DE');
+```
+
+## Locales
+
+The SDK bundle ships only the `en-US` translations to keep the default download small. Any other locale is published as a separate side-loadable file under `dist/locales/<code>.{js,umd.cjs}`. Load only the languages you need — they fetch in parallel with the main bundle, so you pay download cost roughly equal to `max(main, locale)` instead of `main + all locales`.
+
+Both `Libra.init({ locale })` and `Libra.setLocale(locale)` throw synchronously when called with an unregistered locale, so the failure surfaces at the call site instead of silently rendering English. Browser-detected fallback (when `locale` is unset at init) still resolves to `en-US` if no registered locale matches.
+
+### npm consumers
+
+Import the locale defaults and pass them to `Libra.init({ locales })`:
+
+```javascript
+import { Libra } from '@libra/sdk';
+import deDE from '@libra/sdk/locales/de-DE';
+import frCH from '@libra/sdk/locales/fr-CH';
+
+Libra.init({
+  locale: 'de-DE',
+  locales: [deDE, frCH]
+});
+```
+
+### CDN consumers — classic script tag
+
+Each locale's UMD bundle self-registers into `window.__libraLocales__`, which `Libra.init()` drains automatically — no `locales` field needed:
+
+```html
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/locales/de-DE.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/locales/fr-CH.umd.js"></script>
+<script>
+  const { Libra } = window.Libra;
+  Libra.init({ locale: 'de-DE' });
+</script>
+```
+
+The order of the locale script tags relative to the main `libra.umd.js` does not matter as long as all of them load before `Libra.init()` is called.
+
+### CDN consumers — ES module
+
+Load the SDK and the locales you need in parallel, then pass the defaults to `init()`:
+
+```html
+<script type="module">
+  const cdnBase = 'https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>';
+
+  const [{ Libra }, deDE, frCH] = await Promise.all([
+    import(`${cdnBase}/libra.js`),
+    import(`${cdnBase}/locales/de-DE.js`).then((m) => m.default),
+    import(`${cdnBase}/locales/fr-CH.js`).then((m) => m.default)
+  ]);
+
+  Libra.init({
+    locale: 'de-DE',
+    locales: [deDE, frCH]
+  });
+</script>
+```
+
+The `Promise.all` ensures the locale bundles fetch in parallel with the SDK — overall wall-clock load time is roughly `max(libra.js, largest locale)` instead of the sum.
+
+### `Libra.destroy()`
+
+Removes the iframe and cleans up all resources. To re-create the widget afterwards, call `init()` again.
+
+### `Libra.signOut()`
+
+Signs the user out and shows the login screen.
+
+### Types
+
+All types are exported from `@libra/sdk`:
+
+```typescript
+import type {
+  LibraConfig,
+  LibraAuthState,
+  LibraAuthError,
+  LibraLocaleBundle,
+  ExternalDocument,
+  ExternalDocumentCitationClickEvent,
+  ExternalDocumentSource,
+  ResearchSourceId,
+  SupportedLocale
+} from '@libra/sdk';
+
+type LibraConfig = {
+  baseUrl?: string;
+  mountTarget?: string | HTMLElement;
+  zIndex?: number;
+  researchSources?: ResearchSourceId[];
+  locale?: SupportedLocale;
+  locales?: LibraLocaleBundle[];
+  proxy?: {
+    url: string;
+    headers?: Record<string, string>;
+    credentials?: RequestCredentials;
+  };
+  onAuthStateChange?: (state: LibraAuthState) => void;
+  onAuthError?: (error: LibraAuthError) => void;
+  onClose?: () => void;
+  onExternalDocumentCitationClick?: (event: ExternalDocumentCitationClickEvent) => void;
+};
+
+type LibraLocaleBundle = {
+  code: string;
+  translations: Record<string, string>;
+};
+
+type ExternalDocumentCitationClickEvent =
+  | {
+      type: 'chunk';     // "To source" in the citation tooltip
+      url: string;       // chunk URL, may include ?documentAnchor for scroll-to-section
+      source: ExternalDocumentSource;
+      content?: string;  // extracted text of the cited passage, if available
+    }
+  | {
+      type: 'document';  // "View source" in the citation list
+      url: string;       // full document URL
+      source: ExternalDocumentSource;
+    };
+
+type LibraAuthState =
+  | { status: 'authenticated'; source: 'existing_session' | 'signin' | 'signup' }
+  | { status: 'unauthenticated'; source: 'no_session' | 'signout' };
+
+type LibraAuthError = {
+  source: 'signin' | 'signup';
+  reason: 'popup_blocked' | 'popup_closed' | 'authentication_failed';
+};
+
+type ExternalDocument = {
+  id: string;
+  title: string;
+  url: string;
+  source: ExternalDocumentSource;
+};
+
+type ExternalDocumentSource =
+  | 'wolters_kluwer_de' | 'wolters_kluwer_nl' | 'wolters_kluwer_be'
+  | 'wolters_kluwer_pl' | 'wolters_kluwer_it_legale' | 'wolters_kluwer_ro'
+  | 'wolters_kluwer_cz' | 'wolters_kluwer_sk' | 'wolters_kluwer_hu'
+  | 'inview_legal_tax' | 'inview_legal_tax_be'
+  | 'social_eye_be' | 'legal_intelligence'
+  | 'de_pubsec_jobcenter' | 'de_pubsec_sozial'
+  | 'de_pubsec_auslr' | 'de_pubsec_star';
+
+type ResearchSourceId =
+  | 'web_search' | 'legal_web_search' | 'wolters_kluwer_de_rechtsprechung'
+  | 'otto_schmidt' | 'wolters_kluwer'
+  | 'wolters_kluwer_de' | 'wolters_kluwer_pl' | 'wolters_kluwer_nl'
+  | 'wolters_kluwer_be' | 'wolters_kluwer_hu' | 'wolters_kluwer_ro'
+  | 'wolters_kluwer_cz' | 'wolters_kluwer_sk'
+  | 'wolters_kluwer_it_legale' | 'wolters_kluwer_it_fiscale'
+  | 'wolters_kluwer_it_lavoro' | 'wolters_kluwer_it_penale'
+  | 'staempfli' | 'entscheidsuche' | 'opencaselaw' | 'zefix'
+  | 'onlinekommentar' | 'openregister' | 'eurlex' | 'fedlex_search'
+  | 'upc' | 'wolters_kluwer_law_international' | 'kli_search' | 'legal_intelligence'
+  | 'inview_legal_tax' | 'monkey_be' | 'vitallaw'
+  | 'de_pubsec_jobcenter' | 'de_pubsec_sozial'
+  | 'de_pubsec_auslr' | 'de_pubsec_star';
+
+type SupportedLocale =
+  | 'en-US'
+  | 'de-DE' | 'de-CH'
+  | 'pl-PL'
+  | 'nl-NL' | 'nl-BE'
+  | 'fr-BE' | 'fr-CH'
+  | 'it-IT' | 'it-CH'
+  | 'ro-RO' | 'hu-HU' | 'cs-CZ' | 'sk-SK';
+```
+
+## Stacking Context
+
+By default the SDK appends its wrapper to `document.body` with `z-index: 999999`. Use `mountTarget` to mount the wrapper inside an element you control, then manage stacking via that element instead of fighting the global `z-index`.
+
+```javascript
+Libra.init({
+  mountTarget: 'root',
+  zIndex: 5
+});
+```
+
+Give the mount element its own stacking context so the SDK's `z-index` is trapped inside it:
+
+```css
+#root { isolation: isolate; }
+```
+
+With this in place, host overlays inside `#root` can use any `z-index` (e.g. `12`) and stack above the widget naturally.
+
+### Constraints
+
+- Set `mountTarget` once at init. The iframe cannot be reparented later — moving an iframe in the DOM causes the browser to reload it, destroying the chat session.
+- The mount target must remain in the DOM for the SDK's lifetime.
+- If the configured target is missing at init time, the SDK falls back to `document.body`.
+- **The mount target and its ancestors must not establish a containing block for fixed positioning.** `transform`, `perspective`, `filter`, `backdrop-filter`, `will-change: transform | perspective | filter`, and `contain: paint | layout | content | strict` on any ancestor will silently misplace the widget. **`isolation: isolate` is safe** — it creates a stacking context without creating a containing block. The SDK emits a `console.warn` when it detects a known offender on the mount target's ancestor chain.
+
+## Authentication
+
+The SDK handles authentication automatically via an Auth0 popup. The auth screen offers both **Sign in** (existing users) and **Create account** (new users); new accounts are walked through onboarding inside the iframe before the chat mounts. Tokens are stored inside the iframe's `localStorage`, and subsequent loads skip the auth screen if a valid token exists. **No auth configuration is needed from the host application.**
+
+`onAuthStateChange` reports auth-status transitions:
+
+- `authenticated / existing_session` — valid session restored at startup
+- `authenticated / signin` — user just completed the sign-in popup
+- `authenticated / signup` — user just completed the sign-up popup (the iframe then runs onboarding before mounting the chat)
+- `unauthenticated / no_session` — no valid session at startup
+- `unauthenticated / signout` — session was cleared
+
+`onAuthError` reports failed interactive sign-in or sign-up attempts with `reason`: `popup_blocked`, `popup_closed`, or `authentication_failed`. Failed attempts do not emit an auth-state event.
+
+**Account-state gating:** even after a successful login, the SDK may render an in-iframe overlay if the user's account is in a restricted state (onboarding incomplete, expired trial, canceled subscription, pending team membership, inactive subscription). The chat UI is not mounted while a gate is active. Signing out from any gate emits `unauthenticated / signout`.
+
+Call `Libra.signOut()` to programmatically sign the user out.
+
+## Proxy Mode (BFF)
+
+> **⚠️ Alpha — not for production.** The seamless-auth proxy flow has known security issues that are still being fixed. Do not enable it in production until this notice is removed.
+
+Setting `proxy` in `Libra.init()` routes all SDK API requests (`/api`, `/openai`, `/audio`, `/rag`) through a host-controlled Backend-for-Frontend (BFF) instead of directly to `baseUrl`. Auth becomes the BFF's responsibility — the localStorage token flow is disabled, and the browser never holds a Libra or customer token.
+
+### Prerequisites
+
+This integration runs against **staging and production only**.
+
+**You provide to Libra:**
+
+| Value | Example |
+|---|---|
+| IdP issuer (`iss`) | `https://login.wolterskluwer.eu` |
+| JWKS URL | `https://login.wolterskluwer.eu/pf/JWKS` |
+| Expected token audience (`aud`) | `DE.Libra.FAB` |
+
+**Libra provides to you:**
+
+| Item | Value |
+|---|---|
+| Libra backend base URL | Staging `https://staging.libratech.ai` · Production `https://app.libratech.ai` |
+| Auth0 domain | Staging `libra-staging.eu.auth0.com` · Production `libratech.eu.auth0.com` |
+| Embedded audience (`audience`) | `https://embedded.libratech.ai/api` |
+| `subject_token_type` URN | per IdP — e.g. `urn:wk:oauth:token-type:oneid-access-token` (OneID) |
+| Supported jurisdiction codes | `de`, `nl`, `be`, `it`, `li`, `hu`, `cz`, `sk`, (`pl`, `ro` not yet enabled) |
+| M2M `client_id` / `client_secret` | Shared privately (one client per product) |
+
+### Implementation
+
+First, the host page points the widget at your BFF — this sends the session cookie with every SDK request instead of a browser-held token:
+
+```javascript
+Libra.init({
+  proxy: {
+    // proxy.url must live on the host's own site — exact same-origin, the same
+    // registrable domain (app.example.com ↔ proxy.example.com), or a localhost
+    // proxy when the page itself is localhost. init() throws otherwise: the BFF
+    // is your own server, so anything further afield is rejected (prevents SSRF).
+    url: 'https://your-app.example.com/api/libra',
+    credentials: 'include'  // attach the session cookie, same-origin by default
+    // headers: { ... }     // optional; in case you use headers for auth with BFF
+  }
+});
+```
+
+Then the BFF runs the same logic for every proxied request:
+
+```python
+def handle(req):
+    # 1. Auth gate — your existing session + CSRF. Libra never sees the cookie.
+    session  = resolve_session(req.cookie)         # missing / expired → 401
+    check_csrf(req)                                # unsafe methods → 403 if invalid
+    wk_token = session.access_token                # live customer token, server-side only
+    cid      = req.header("X-Correlation-ID") or uuid4()
+
+    # Headers attached to EVERY forwarded request (mapped user or not):
+    headers = strip_browser_headers(req.headers)   # drop cookie / authorization / …
+    headers["X-WK-Token"]        = wk_token
+    headers["X-WK-Jurisdiction"] = JURISDICTION    # your product's code
+    headers["X-Correlation-ID"]  = cid
+
+    # 2. Get a Libra token from the Auth0 CTE — cached (see below).
+    try:
+        libra_token = get_or_exchange(wk_token, JURISDICTION, cid)
+    except CteDenied as deny:
+        if deny.reason == "user_not_found":
+            # Unmapped user — NOT an error. Forward tokenless; Libra replies 401,
+            # relayed verbatim, so the SDK shows its own login/link screen.
+            return relay(req, headers)
+        # 3. Any other deny → enveloped error (see envelope() below).
+        return envelope(deny.reason, cid)
+
+    # 4. Mapped user → attach the Libra token and forward.
+    headers["Authorization"] = f"Bearer {libra_token}"
+    return relay(req, headers)                     # relay Libra's response unchanged
+
+
+# Cache the Libra token per user for ~60s — REQUIRED: the SDK bursts many calls on
+# load, and a fresh exchange per call trips Auth0's /oauth/token rate limit.
+def get_or_exchange(wk_token, jurisdiction, cid):
+    if token := cache.get(wk_token):               # per user, never shared across users
+        return token
+    token = auth0_token_exchange(wk_token, jurisdiction, cid)   # raises CteDenied on failure
+    cache.set(wk_token, token, ttl=60)             # trade-off: revocation lags up to the TTL
+    return token
+
+
+# RFC 8693 token exchange against the Libra Auth0 tenant.
+def auth0_token_exchange(wk_token, jurisdiction, cid):
+    resp = http.post(
+        f"https://{AUTH0_DOMAIN}/oauth/token",
+        headers={"Content-Type": "application/x-www-form-urlencoded"},
+        data={
+            "grant_type":         "urn:ietf:params:oauth:grant-type:token-exchange",
+            "subject_token":      wk_token,            # the live customer token
+            "subject_token_type": SUBJECT_TOKEN_TYPE,  # per-IdP URN, provided by Libra
+            "audience":           "https://embedded.libratech.ai/api",
+            "scope":              "openid email profile",
+            "client_id":          CLIENT_ID,           # M2M creds, delivered privately
+            "client_secret":      CLIENT_SECRET,
+            "jurisdiction":       jurisdiction,        # custom params read by the CTE Action
+            "correlation_id":     cid,
+        },
+    )
+    if resp.status == 200:
+        return resp.json()["access_token"]             # Libra RS256 token
+    if resp.status == 403:
+        # Deny → { "error": "access_denied", "error_description": "<reason>:<base64>" }
+        raise CteDenied(resp.json()["error_description"].split(":")[0])
+    # Auth0 5xx / timeout → transient; 429 / network / anything else → upstream error
+    raise CteDenied("auth_unavailable" if resp.status >= 500 else "upstream_error")
+
+
+# Map a non-`user_not_found` failure to the SDK error envelope. The SDK keys off the
+# STATUS (401 → login/link screen; 5xx / 502 → generic error); reason / action are a
+# stable contract for your logs. Never leak Auth0's raw error_description.
+def envelope(reason, cid):
+    status, sdk_reason, action = {
+        "invalid_subject_token": (401, "wk_session_expired", "refresh_wk_session"),
+        "identity_lookup_error": (503, "auth_unavailable",   "try_again"),  # Libra lookup 5xx
+        "auth_unavailable":      (503, "auth_unavailable",   "try_again"),  # Auth0 5xx / timeout
+    }.get(reason, (502, "auth_unavailable", "try_again"))  # upstream_error / 429 / unknown → 502
+    return Response(status, {
+        "error":          "embedded_auth_failed",
+        "reason":         sdk_reason,
+        "action":         action,
+        "correlation_id": cid,
+    })
+```
+
+Notes:
+
+- **`X-Correlation-ID`** is your trace key — one UUID per request (or echo an inbound one), sent to Auth0 as `correlation_id`, to Libra as the header, and echoed in the error envelope.
+- **Never** log tokens (log the correlation ID instead), cache SDK responses, share a token across users, persist it, or return any token to the browser.
+
+## Browser Permissions
+
+If your host page sets a restrictive `Permissions-Policy` header, you must allow `microphone` for voice input to work — otherwise it will be blocked inside the iframe. The SDK iframe inherits your page's origin, so allowing `self` is sufficient:
+
+```
+Permissions-Policy: microphone=(self)
+```
+
+If your page does not set a `Permissions-Policy` header at all, no configuration is needed.
+
+## Isolation Guarantees
+
+The SDK runs the chat interface inside an `<iframe>` loaded from a blob URL with all assets inlined:
+
+- **Zero external requests at load time** — the bundle is self-contained
+- **Full CSS isolation** — host styles cannot affect the widget and vice versa
+- **No CSP issues** — the blob URL iframe has its own document context, independent of your page's Content-Security-Policy
+- **Session persistence** — `attach()` / `detach()` only update the iframe's CSS position, so chat state (conversation, scroll, in-progress streaming) is preserved across re-attaches

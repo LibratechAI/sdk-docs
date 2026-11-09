@@ -1,0 +1,74 @@
+---
+title: "Authentication"
+description: "Choose an authentication path, listen for auth changes, and handle sign-out."
+---
+
+The SDK supports two authentication paths:
+
+- **Standard popup authentication.** The SDK shows its own sign-in and sign-up screens and opens the Libra authentication popup. Your product doesn't implement the flow.
+- **Proxy or BFF authentication.** Your product already authenticates its users, and a host-owned backend signs them in to Libra. See [BFF and proxy authentication](/integration/bff-authentication).
+
+See [Sign-in and onboarding](/capabilities/sign-in-and-onboarding) for the screens users see.
+
+## Standard popup authentication
+
+With the standard flow, the SDK presents sign-in and sign-up entry points inside its authentication experience and opens the Libra authentication popup. The SDK restores an existing session when one is available and reports authentication transitions through `onAuthStateChange`:
+
+```js
+Libra.init({
+	productId: 'wko_de',
+	onAuthStateChange: (state) => {
+		// authenticated: existing_session, signin, or signup
+		// unauthenticated: no_session or signout
+		console.log(state.status, state.source);
+	},
+	onAuthError: (error) => {
+		console.error(`Libra ${error.source} failed: ${error.reason}`);
+	}
+});
+```
+
+The host does not implement the standard popup authentication flow. It listens for state and error callbacks when it needs to update host UI or telemetry. A blocked or closed popup is reported through `onAuthError`; successful sign-in and sign-up are reported as authenticated states.
+
+### What the user sees
+
+| Your product receives or calls | What the user sees |
+| --- | --- |
+| `authenticated` / `existing_session` | The chat, without signing in. |
+| `unauthenticated` / `no_session` | The welcome screen with **Sign in** and **Start free trial**. |
+| `authenticated` / `signin` | The popup closes and the chat opens. |
+| `authenticated` / `signup` | Onboarding in the SDK window, then the chat. |
+| `onAuthError` | A failed attempt doesn't change the auth state, so the welcome screen stays. For `account_in_use`, an error message says the WK account is already linked to another user. |
+| `Libra.signOut()` | The welcome screen. |
+
+See [Sign-in and onboarding](/capabilities/sign-in-and-onboarding) for screenshots of each screen.
+
+## Account and onboarding gates
+
+Authentication is separate from account eligibility. After authentication, the SDK can present onboarding or account-state gates when the account needs action, has an unavailable subscription state, or is waiting for access. Users then see an [account screen](/capabilities/sign-in-and-onboarding#account-screens) instead of the chat; each has **Sign Out**, which emits `unauthenticated` / `signout`. Treat these states as part of the SDK experience and route product-specific recovery to the owning Libra or host flow rather than assuming that a missing chat view is an integration failure.
+
+## Sign-out and session restoration
+
+Use `Libra.signOut()` to ask the active SDK session to sign out. The SDK reports the resulting `unauthenticated` state with source `signout`. When the widget starts again and an existing session is restored, `onAuthStateChange` reports source `existing_session`.
+
+```js
+await Libra.signOut();
+// The host receives: { status: 'unauthenticated', source: 'signout' }
+```
+
+`detach()` does not sign the user out and does not clear the session. It only hides the widget; reattaching can restore the active conversation. Use `destroy()` when the host wants to remove the SDK instance completely. See [Lifecycle and configuration](/integration/lifecycle).
+
+## Proxy or BFF authentication
+
+In proxy mode, the host supplies a same-site BFF endpoint through `proxy.url`. SDK API requests are routed through that endpoint instead of directly to the Libra base URL, and the host's server owns the session or identity-linking exchange. The SDK's local token flow is disabled in this mode.
+
+```js
+Libra.init({
+	productId: 'wko_de',
+	proxy: {
+		url: '/api/libra'
+	}
+});
+```
+
+See [BFF and proxy authentication](/integration/bff-authentication) for token exchange, identity linking, host-owned recovery, and the public error reasons, and [Trusted origins](/integration/trusted-origins) for the allowed proxy origins.

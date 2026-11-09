@@ -1,51 +1,90 @@
 ---
-title: "Libra SDK"
-description: "Embed Libra's AI legal research chat in any Wolters Kluwer product with one script and one function call"
-mode: "wide"
+title: "Libra Add-in SDK documentation"
+sidebarTitle: "Welcome"
+description: "Understand the Libra Add-in, plan the experience, and build a reliable SDK integration."
 ---
 
-import { sdkVersion, sdkReleaseDate } from '/snippets/sdk-version.mdx';
+Integrate Libra's AI-powered legal research and conversational capabilities into a host product. Learn how the solution works, choose the right integration path, and find the public SDK contract.
 
-`@libra/sdk` renders the full Libra chat inside an isolated iframe on your page: research over your product's Wolters Kluwer sources, citations, the document the user is reading, assistants and workflows. No CSS conflicts, no external requests at load, no auth configuration on the host side. Current release: **v{sdkVersion}** ({sdkReleaseDate}).
+![Libra open beside a host research product, showing in-context assistance and the Continue in Libra handoff](/images/libra-add-in-host-product.png)
 
-<video autoPlay muted loop playsInline src="/assets/videos/sdk-hero.webm" className="rounded-xl border w-full" />
+*Libra open beside a host research product.*
 
-<CardGroup cols={3}>
-  <Card title="Quickstart" icon="rocket" href="/getting-started/quickstart">
-    Install, `init()`, `attach()`. A working widget in five minutes.
+<CardGroup cols={2}>
+  <Card title="Quickstart" icon="rocket" href="/integration/quickstart">
+    Follow the minimum implementation path for engineers and QA teams.
   </Card>
-  <Card title="Integration guides" icon="plug" href="/guides/embedding">
-    Embedding, panel placement, authentication, proxy mode, locales, citations.
-  </Card>
-  <Card title="Capabilities" icon="sparkles" href="/capabilities/overview">
-    What your users get. Written for product managers and marketing.
-  </Card>
-  <Card title="API reference" icon="book-open" href="/reference/api">
-    Every `Libra.*` method and every `init()` option.
-  </Card>
-  <Card title="Playground" icon="flask-conical" href="/getting-started/playground">
-    Try the widget live against staging before you write code.
-  </Card>
-  <Card title="Changelog" icon="history" href="/changelog">
-    Every release, breaking changes tagged.
+  <Card title="Playground" icon="flask-conical" href="/integration/playground">
+    Try each SDK call in the hosted playground without writing code.
   </Card>
 </CardGroup>
 
-## Who this site is for
+## What would you like to do?
 
-- **Engineers** integrating the SDK. Every guide leads with the snippet, copied verbatim from the SDK's README, then explains the behaviour around it.
-- **Product managers and marketing.** The [Capabilities](/capabilities/overview) section describes what end users see, with screenshots from the playground, and [Products and sources](/capabilities/products-and-sources) lists which Wolters Kluwer products the SDK serves.
+Choose the path that best matches what you need today. You can move freely between functional, design, and technical documentation.
 
-<Note>
-This site is for Wolters Kluwer product teams. The SDK is published to WK Artifactory and the WK CDN, not to the public npm registry.
-</Note>
+<CardGroup cols={2}>
+  <Card title="Solution overview" icon="house" href="/solution/overview">
+    Understand the solution, its scope, and its terminology.
+  </Card>
+  <Card title="Capabilities" icon="sparkles" href="/capabilities/overview">
+    See what users can do in the SDK window, with screenshots of each capability.
+  </Card>
+  <Card title="Integration guide" icon="plug" href="/integration/overview">
+    Set up, implement, and deploy an integration.
+  </Card>
+  <Card title="API reference" icon="book-open" href="/reference/overview">
+    Look up exact methods, configuration, callbacks, types, and technical contracts.
+  </Card>
+  <Card title="Status and support" icon="life-buoy" href="/status/overview">
+    Check the reviewed SDK version, current limitations, release notes, and support options.
+  </Card>
+</CardGroup>
 
-## A note on names
+## Libra inside your product
 
-**`@libra/sdk`** is the package you install. **The embedded widget** is what your users see. Wolters Kluwer product and design material calls that surface the **Libra Add-in** — the same thing.
+The Libra Assistant SDK embeds Libra's conversational research capabilities in a host product, so people can work with supported in-context content without leaving that workflow. Depending on host configuration and user access, supported conversations and Libra objects can continue across the embedded experience and Libra Workspace.
 
-These docs avoid "add-in", because in Libra's own codebase that word means the **Word and Outlook add-ins**, a genuinely separate surface whose conversations are kept in their own list and never appear in the widget's history.
+<table>
+  <tbody>
+    <tr>
+      <td><strong>In context</strong></td>
+      <td>Make the document currently being viewed available as conversation context.</td>
+    </tr>
+    <tr>
+      <td><strong>Synchronized</strong></td>
+      <td>Continue supported conversations and other supported Libra objects across Libra surfaces, subject to configuration and access.</td>
+    </tr>
+    <tr>
+      <td><strong>Integrated</strong></td>
+      <td>The host product controls placement, sizing, entry points, and optional citation navigation.</td>
+    </tr>
+    <tr>
+      <td><strong>Entitlement-aware</strong></td>
+      <td>Available features depend on the user's Libra plan and product access.</td>
+    </tr>
+  </tbody>
+</table>
 
-<Tip>
-**Before your first integration call:** every domain you embed on has to be registered with Libra in advance, including localhost and staging. It is the single most common reason a first integration appears to hang on the sign-in screen. [Authentication](/guides/authentication#register-your-domain-before-you-go-live)
-</Tip>
+## Common tasks
+
+Use these entry points to move quickly into the current documentation:
+
+- [Install and start the SDK](/integration/quickstart)
+- [Try the SDK in the Playground](/integration/playground)
+- [Plan the integration](/integration/overview)
+- [See what users can do](/capabilities/overview)
+- [Review current status and limitations](/status/overview)
+- [Read release updates](/changelog)
+
+## Current status
+
+The [Status and support](/status/overview) page states the reviewed SDK version, current limitations, and support routes. The [Changelog](/changelog) lists SDK releases.
+
+## Need help?
+
+- [Email integration support](mailto:libra-integrations@wolterskluwer.com)
+- [Ask in the Libra SDK Integration - Dev chat](https://teams.microsoft.com/l/channel/19%3Aae4937fe4c7a4c40b45fb2c9bf349505%40thread.tacv2/Libra%20SDK%20Integration%20-%20Dev%20chat?groupId=91f72c7b-9471-43fd-bfd7-3b870128f4b7&tenantId=8ac76c91-e7f1-41ff-a89c-3553b2da2c17) on Microsoft Teams
+- [Send a product request or feedback](https://app.notion.com/p/Product-Requests-Feedback-277eb48252ec801685a5c40c98d3f50d)
+- [Review current limitations](/status/overview)
+- [Check release updates](/changelog)

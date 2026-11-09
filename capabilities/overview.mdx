@@ -1,63 +1,88 @@
 ---
-title: "Capabilities"
-description: "What end users get when a Wolters Kluwer product embeds the Libra SDK"
+title: "Capabilities overview"
+description: "What users can do in the Libra SDK window, and who controls each capability."
 ---
 
-The SDK puts the Libra legal-research chat inside a Wolters Kluwer product, beside the content the user is already working with. This page is the overview; the pages under it describe each area in detail, and the [integration guides](/guides/embedding) describe how a product wires it up.
+import { AnnotatedImage } from "/snippets/annotated-image.jsx"
+import { screenshotMarkers } from "/snippets/screenshot-markers.jsx"
 
-<video autoPlay muted loop playsInline src="/assets/videos/sdk-embed-tour.webm" className="rounded-xl border" style={{ maxWidth: "360px", width: "100%", display: "block", margin: "0 auto" }} />
+Capabilities fall into two groups:
 
-<Note>
-Wolters Kluwer product material calls this the **Libra Add-in**. These docs say *embedded widget*, to keep it distinct from the Word and Outlook add-ins — a separate surface whose conversations live in their own list and do not appear here.
-</Note>
+- **SDK-specific** capabilities were built for the SDK. The SDK controls them, so your product can control them too where the SDK offers a setting.
+- **Libra-native** capabilities come from the Libra app. The SDK doesn't control them. The [Libra documentation](https://docs.libratech.ai/en/getting-started/welcome) covers them in full; these pages show how they look in the SDK window.
 
-## What the widget is
+## The SDK window at a glance
 
-It is the Libra chat, running in an isolated iframe inside your product, signed in as the user's own Libra account. Conversations, projects, uploaded files and assistants are the **same records** the user sees in the Libra Workspace — not a copy. A chat started in the widget can be finished in the Workspace and vice versa.
+<AnnotatedImage
+  markers={screenshotMarkers["sdk-layout"]}
+  width={340}
+  items={[
+    { title: "Libra wordmark", text: "shown with Close when your product provides onClose." },
+    { title: "Close", text: "closes the SDK window." },
+    { title: "Menu", text: "Sign Out." },
+    { title: "Project selector", text: "switches the active project." },
+    { title: "Chat History", text: "reopens earlier chats." },
+    { title: "New chat", text: "starts a blank chat." },
+    { title: "Continue in Libra", text: "opens the current chat in Libra Workspace." },
+    { title: "Greeting", text: "shown in an empty chat. Questions and answers appear here." },
+    { title: "Chat input", text: "type a task, or type @ to add context." },
+    { title: "Improve", text: "rewrites the prompt before sending." },
+    { title: "Tools", text: "files, Assistants, Workflows, drafting, and connectors." },
+    { title: "Research sources", text: "the logos show the selected sources. Select to change them." },
+    { title: "Chat mode", text: "Standard, Deep Thinking, or Fast." },
+    { title: "Voice input", text: "dictate a prompt." },
+    { title: "Send", text: "sends the prompt." },
+    { title: "Legal notice", text: "a reminder to verify AI output." },
+  ]}
+>
+  <img src="/images/capabilities/sdk-layout.png" alt="The SDK window with its header, chat controls, conversation area, and chat input" style={{ width: "100%", borderRadius: 12, border: "1px solid rgba(127,127,127,.25)" }} />
+</AnnotatedImage>
 
-<CardGroup cols={2}>
-  <Card title="The chat surface" icon="message-square" href="/capabilities/chat">
-    Composer, answer modes, voice input, answer actions, and how citations are presented.
+## SDK-specific capabilities
+
+<Columns cols={2}>
+  <Card title="SDK window and header" icon="panel-right" href="/capabilities/sdk-window">
+    Where the SDK window opens and what the header contains.
   </Card>
-  <Card title="Context and sources" icon="library" href="/capabilities/context-and-sources">
-    Research sources, the document on screen, uploads, @-mentions, projects and history.
+  <Card title="Current-document context" icon="file-plus" href="/capabilities/current-document">
+    Suggest or attach the document the user is working on.
   </Card>
-  <Card title="Plans and limits" icon="gauge" href="/capabilities/plans-and-limits">
-    What each subscription includes, the usage limits, and what only the Workspace can do.
+  <Card title="Citation navigation" icon="link" href="/capabilities/citation-navigation">
+    Open research citations in your product instead of a new tab.
   </Card>
-  <Card title="Products and sources" icon="list" href="/capabilities/products-and-sources">
-    Every `productId` and `ResearchSourceId` the SDK accepts.
+  <Card title="Document Viewer" icon="file-text" href="/capabilities/document-viewer">
+    Preview cited and generated documents beside the chat.
   </Card>
-</CardGroup>
+  <Card title="Sign-in and onboarding" icon="user-check" href="/capabilities/sign-in-and-onboarding">
+    How users sign in, create an account, and get started.
+  </Card>
+  <Card title="Language" icon="languages" href="/capabilities/language">
+    Show the SDK window in the user's language.
+  </Card>
+  <Card title="Handoffs to Libra" icon="external-link" href="/capabilities/handoffs">
+    When and how users continue in Libra Workspace.
+  </Card>
+</Columns>
 
-## What it does, in one screen
+## Libra-native capabilities
 
-Research grounded in the product's Wolters Kluwer sources, answers that cite what they used, and the document the user is reading available as context in one click.
+<Columns cols={2}>
+  <Card title="Chat and answers" icon="messages-square" href="/capabilities/chat-and-answers">
+    Ask, refine, and reuse answers.
+  </Card>
+  <Card title="Research sources and citations" icon="book-open" href="/capabilities/research-sources-and-citations">
+    Choose sources and check what an answer cites.
+  </Card>
+  <Card title="Files and tools" icon="wrench" href="/capabilities/files-and-tools">
+    Add files and context, run Workflows, and start drafting.
+  </Card>
+  <Card title="Assistants, history, and projects" icon="folder-open" href="/capabilities/assistants-history-projects">
+    Run Assistants and pick up earlier work.
+  </Card>
+</Columns>
 
-<Frame caption="An answer in the embedded widget: inline citation chips, the cited-sources row, and the answer actions">
-  <img src="/assets/images/sdk/chat-hero.png" alt="Libra widget showing a German legal answer with inline citation chips, a '12 Cited Sources' row, and Copy / Regenerate / Export / Create email actions" width="360" />
-</Frame>
+## What depends on the user's account
 
-## What is in the widget, and what is not
-
-| In the embedded widget | Libra Workspace only |
-|---|---|
-| Chat, with research over the product's sources | Creating or editing assistants and workflows |
-| **Running** an existing assistant or workflow | Review, Discovery, Playbooks |
-| Uploading and attaching documents | Drafting documents |
-| Chat history and project switching (current project) | Creating projects |
-| Citations, export, email drafting | Team and subscription administration |
-
-Users reach the Workspace through **Continue in Libra**, which opens the same conversation in a new browser tab. See [Chat handoff](/guides/chat-handoff).
-
-## Fourteen languages
-
-`en-US`, `de-DE`, `de-CH`, `pl-PL`, `nl-NL`, `nl-BE`, `fr-BE`, `fr-CH`, `it-IT`, `it-CH`, `ro-RO`, `hu-HU`, `cs-CZ`, `sk-SK` — switchable at runtime without losing the conversation, and the sign-in screen follows the same language. See [Locales](/guides/locales).
-
-## Sign-in without leaving the product
-
-Existing users sign in through a popup; new users can create an account and complete onboarding inside the widget. Products with their own single sign-on can remove the popup entirely with [proxy mode](/guides/proxy-mode). Accounts in a restricted state see a clear notice rather than a blank panel. See [Authentication](/guides/authentication).
-
-## Version and release cadence
-
-Every release is listed in the [changelog](/changelog), published to WK Artifactory and the WK CDN together, so products upgrade deliberately.
+- **Subscription.** Some features are hidden or show an upgrade prompt.
+- **Product access.** It decides which research sources users can choose.
+- **Their own content.** Projects, files, Assistants, and Workflows come from the user's account and team. New files appear after indexing.

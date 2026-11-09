@@ -1,108 +1,114 @@
 #!/usr/bin/env node
-// Regenerate changelog.mdx and snippets/sdk-version.mdx from packages/sdk/CHANGELOG.md
-// in LibratechAI/sandbox (origin/main). Deterministic — run it, don't hand-edit the outputs.
-//
-//   node scripts/sync-changelog.mjs                 # fetch CHANGELOG.md via `gh api`
-//   node scripts/sync-changelog.mjs --file <path>   # use a local copy instead (offline / sandbox checkout)
-//   node scripts/sync-changelog.mjs --check         # exit 1 if the outputs would change (CI gate)
-//
-// `## Unreleased` is skipped: merged is not shipped.
+/**
+ * Rebuilds changelog.mdx from packages/sdk/CHANGELOG.md in the sandbox, so the
+ * text is an exact copy of the staging changelog (sdk.staging.libratech.ai/changelog.html)
+ * for released versions, including upstream wording. Only the layout is ours.
+ * Unreleased changes stay out: the Unreleased section and any version newer than
+ * the newest sdk-v* tag.
+ *
+ *   node scripts/sync-changelog.mjs            # write changelog.mdx
+ *   node scripts/sync-changelog.mjs --check    # exit 1 if changelog.mdx differs
+ *
+ * Options: --sandbox <path> (or SANDBOX_PATH), --ref <git ref> (default origin/staging,
+ * the branch the staging site is built from). Run `git -C <sandbox> fetch origin` first.
+ */
+import { execFileSync } from "node:child_process";
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { readFile, writeFile } from 'node:fs/promises';
-import { execFileSync } from 'node:child_process';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const OUT = path.join(REPO_ROOT, "changelog.mdx");
 
-export const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const REPO = 'LibratechAI/sandbox';
-const SOURCE = 'packages/sdk/CHANGELOG.md';
-const OUT_CHANGELOG = path.join(ROOT, 'changelog.mdx');
-const OUT_VERSION = path.join(ROOT, 'snippets/sdk-version.mdx');
-
-export async function loadChangelog(file) {
-  if (file) return readFile(file, 'utf8');
-  return execFileSync(
-    'gh',
-    ['api', `repos/${REPO}/contents/${SOURCE}?ref=main`, '-H', 'Accept: application/vnd.github.raw+json'],
-    { encoding: 'utf8', maxBuffer: 8 << 20 },
-  );
-}
-
-/** → [{ version, date|null, bullets: string[] }], newest first; `Unreleased` → { version: 'Unreleased' }. */
-export function parseChangelog(md) {
-  const out = [];
-  let cur = null;
-  for (const line of md.split('\n')) {
-    const h = line.match(/^## (\S+)(?:\s+-\s+(\d{4}-\d{2}-\d{2}))?\s*$/);
-    if (h) { cur = { version: h[1], date: h[2] ?? null, bullets: [] }; out.push(cur); continue; }
-    if (cur && line.trim()) cur.bullets.push(line.replace(/^\s*[-*]\s+/, ''));
+const args = { sandbox: process.env.SANDBOX_PATH || path.join(REPO_ROOT, ".sandbox-checkout"), ref: "origin/staging", check: false };
+const argv = process.argv.slice(2);
+for (let i = 0; i < argv.length; i++) {
+  if (argv[i] === "--check") args.check = true;
+  else if (argv[i] === "--sandbox") args.sandbox = argv[++i];
+  else if (argv[i] === "--ref") args.ref = argv[++i];
+  else {
+    console.error(`Unknown argument: ${argv[i]}`);
+    process.exit(2);
   }
-  return out;
 }
 
-export const isVersion = (v) => /^\d+\.\d+\.\d+/.test(v);
-export const compareVersions = (a, b) => {
-  const pa = a.split('.').map(Number), pb = b.split('.').map(Number);
-  for (let i = 0; i < 3; i++) if ((pa[i] ?? 0) !== (pb[i] ?? 0)) return (pa[i] ?? 0) - (pb[i] ?? 0);
-  return 0;
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const longDate = (isoDate) => {
+  const [y, m, d] = isoDate.split("-").map(Number);
+  return `${d} ${MONTHS[m - 1]} ${y}`;
 };
 
-export const longDate = (iso) =>
-  iso ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+// MDX treats `<`, `{` and `}` as syntax; escaping them outside inline code keeps the rendered text identical.
+const escapeMdx = (line) =>
+  line.split(/(`[^`]*`)/).map((part, i) => (i % 2 ? part : part.replace(/[<{}]/g, (c) => `\\${c}`))).join("");
 
-// Outside inline code, `{ } <` are JSX in MDX. Escape them; leave code spans alone.
-function mdxSafe(text) {
-  return text.split(/(`[^`]*`)/).map((seg, i) => (i % 2 ? seg : seg.replace(/[{}]/g, (c) => `\\${c}`).replace(/<(?=[A-Za-z/!])/g, '&lt;'))).join('');
+let source;
+try {
+  source = execFileSync("git", ["-C", args.sandbox, "show", `${args.ref}:packages/sdk/CHANGELOG.md`], { encoding: "utf8" });
+} catch {
+  console.error(`Can't read packages/sdk/CHANGELOG.md at ${args.ref} in ${args.sandbox}. Set --sandbox or SANDBOX_PATH.`);
+  process.exit(2);
 }
 
-function renderChangelog(releases) {
-  const blocks = releases.filter((r) => isVersion(r.version)).map((r) => {
-    const breaking = r.bullets.some((b) => /^BREAKING\b/i.test(b));
-    const props = [`label="v${r.version}"`, r.date ? `description="${longDate(r.date)}"` : null, breaking ? 'tags={["Breaking changes"]}' : null].filter(Boolean).join(' ');
-    return `<Update ${props}>\n${r.bullets.map((b) => `- ${mdxSafe(b)}`).join('\n')}\n</Update>`;
-  });
-  return `---
+const cmp = (a, b) => {
+  const [x, y] = [a, b].map((v) => v.split(".").map(Number));
+  return x[0] - y[0] || x[1] - y[1] || x[2] - y[2];
+};
+// Releases before 0.5.0 have no tag, so compare with the newest tag instead of requiring one per version.
+const newestRelease = execFileSync("git", ["-C", args.sandbox, "tag", "--list", "sdk-v*"], { encoding: "utf8" })
+  .split("\n")
+  .map((t) => t.trim().replace(/^sdk-v/, ""))
+  .filter((v) => /^\d+\.\d+\.\d+$/.test(v))
+  .sort(cmp)
+  .at(-1);
+if (!newestRelease) {
+  console.error(`No sdk-v* tags in ${args.sandbox}. Run git -C <sandbox> fetch --tags.`);
+  process.exit(2);
+}
+
+const blocks = [];
+const skipped = [];
+for (const part of source.split(/^## /m).slice(1)) {
+  const [heading, ...rest] = part.split("\n");
+  const body = rest.join("\n").trim().split("\n").map(escapeMdx).join("\n");
+  const title = heading.trim();
+  if (/^unreleased$/i.test(title)) {
+    skipped.push("Unreleased");
+    continue;
+  }
+  const m = title.match(/^(\d+\.\d+\.\d+)\s+-\s+(\d{4}-\d{2}-\d{2})$/);
+  if (!m) {
+    console.error(`Unexpected changelog heading: "## ${title}"`);
+    process.exit(2);
+  }
+  const [, version, date] = m;
+  if (cmp(version, newestRelease) > 0) {
+    skipped.push(version);
+    continue;
+  }
+  blocks.push(`<Update label="Release: ${version}" id="release-${version.replace(/\./g, "")}">\n\n_${longDate(date)}_\n\n${body}\n\n</Update>`);
+}
+
+const output = `---
 title: "Changelog"
-description: "Every @libra/sdk release, newest first"
+description: "What's new in the Libra SDK."
 ---
 
-{/* GENERATED by scripts/sync-changelog.mjs from LibratechAI/sandbox ${SOURCE}. Edit the source, then re-run — do not edit this file. */}
+{/* Generated by scripts/sync-changelog.mjs from packages/sdk/CHANGELOG.md. Don't edit by hand. */}
 
-Versions follow the npm package. **Breaking changes** are tagged; migrate before upgrading. The same version is published to WK Artifactory and promoted to the WK CDN.
+SDK releases, newest first. The text matches the [staging changelog](https://sdk.staging.libratech.ai/changelog.html), which also lists changes that aren't released yet.
 
-${blocks.join('\n\n')}
+${blocks.join("\n\n")}
 `;
-}
 
-function renderVersion(latest) {
-  return `{/* GENERATED by scripts/sync-changelog.mjs — do not edit. Usage: import { sdkVersion } from '/snippets/sdk-version.mdx' */}
-export const sdkVersion = "${latest.version}";
-export const sdkReleaseDate = "${longDate(latest.date)}";
-`;
-}
-
-async function main() {
-  const argv = process.argv.slice(2);
-  const file = argv.includes('--file') ? argv[argv.indexOf('--file') + 1] : null;
-  const releases = parseChangelog(await loadChangelog(file));
-  const shipped = releases.filter((r) => isVersion(r.version)).sort((a, b) => compareVersions(b.version, a.version));
-  if (!shipped.length) throw new Error('no released versions found in CHANGELOG.md');
-  const unreleased = releases.find((r) => !isVersion(r.version));
-  if (unreleased?.bullets.length) console.error(`note: ${unreleased.bullets.length} Unreleased bullet(s) skipped (not shipped)`);
-
-  const outputs = [[OUT_CHANGELOG, renderChangelog(shipped)], [OUT_VERSION, renderVersion(shipped[0])]];
-  let changed = 0;
-  for (const [p, content] of outputs) {
-    const before = await readFile(p, 'utf8').catch(() => null);
-    if (before === content) continue;
-    changed++;
-    if (argv.includes('--check')) console.error(`stale: ${path.relative(ROOT, p)}`);
-    else { await writeFile(p, content); console.log(`wrote ${path.relative(ROOT, p)}`); }
+if (args.check) {
+  const current = await readFile(OUT, "utf8").catch(() => "");
+  if (current !== output) {
+    console.error(`changelog.mdx differs from packages/sdk/CHANGELOG.md at ${args.ref}. Run node scripts/sync-changelog.mjs.`);
+    process.exit(1);
   }
-  console.log(`latest v${shipped[0].version} (${shipped[0].date}); ${shipped.length} releases; ${changed ? changed + ' file(s) ' + (argv.includes('--check') ? 'stale' : 'updated') : 'up to date'}`);
-  if (argv.includes('--check') && changed) process.exit(1);
-}
-
-if (path.resolve(process.argv[1] ?? '') === fileURLToPath(import.meta.url)) {
-  main().catch((e) => { console.error(e.message ?? e); process.exit(1); });
+  console.log(`changelog.mdx matches packages/sdk/CHANGELOG.md at ${args.ref}.`);
+} else {
+  await writeFile(OUT, output);
+  console.log(`Wrote changelog.mdx from ${args.ref} (${blocks.length} releases, up to ${newestRelease}${skipped.length ? `; left out unreleased: ${skipped.join(", ")}` : ""}).`);
 }

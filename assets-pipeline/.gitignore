@@ -1,0 +1,8 @@
+# Never commit real credentials or session state.
+.env
+storageState.json
+storageState.*.json
+node_modules/
+/tmp/
+# Local worklist from the release scanner; rerun the scan to regenerate it.
+.capture-queue.json

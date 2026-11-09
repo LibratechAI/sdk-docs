@@ -1,0 +1,75 @@
+---
+title: "Attachments and availability"
+description: "What your product can pass to Libra, and when Libra can use it."
+---
+
+Your product can pass documents and files into the chat in two ways: [suggest them](/integration/suggestions) for the user to attach, or [add them directly](/integration/add-attachments). Both take the same `Attachment` objects and follow the same availability rules. The SDK owns the chat UI; your product owns document identity, permissions, and URLs.
+
+## Attachment types
+
+An `Attachment` is either an `ExternalDocument` or a `HostFile`:
+
+- `ExternalDocument` points to a document on your system. Libra retrieves it by `id` and `source`.
+- `HostFile` is a file your product already holds in memory, such as a `File` or `Blob` in a desktop app without its own backend. The SDK uploads it into the user's active Libra project through the chat's own upload path.
+
+For an `ExternalDocument`, `source` identifies the owning source:
+
+- A supported research source, such as `'wko_de'`. `web_search` isn't allowed. `id` is your document ID.
+- A legal software product (`LegalSoftwareSourceId`): `'kleos'`, `'legisway'`, `'notaionext'`, or `'suitenext'`. `id` is the product's own document ID.
+
+An `ExternalDocument` can carry nested `attachments`, such as a PDF of the same document. A nested attachment uses the same shape without its own nested attachments. Libra treats the document and its attachments as one group.
+
+A `HostFile` built from a `File` can omit `title`; the SDK uses `file.name`. A `HostFile` built from a `Blob` has no name of its own, so `title` is required. The title is shown on the chip and used as the uploaded file name.
+
+All attachment methods require an active session. Call them after `Libra.attach()` has completed.
+
+## Availability boundary
+
+Whether Libra can use a document, and who indexes it, depends on what you pass:
+
+| You pass | Must be in your FAB index? | Does Libra index it? | Where Libra reads it |
+| --- | --- | --- | --- |
+| `ExternalDocument` from a research source | **Yes.** Libra checks the index and never adds to it. | No. Your product's FAB index must already contain it. | From your FAB index, when answering. |
+| `ExternalDocument` from a legal software product | No | **Yes.** Libra links the document into the user's active project and starts indexing it. | From the user's project. |
+| `HostFile` | No | **Yes.** Libra uploads and indexes it like any file the user uploads. | From the user's project. |
+
+### Research documents and the FAB index
+
+<Warning>
+**FAB index required.** A research document can be used only if it's already in your product's FAB index. Libra checks the index but doesn't add documents to it.
+</Warning>
+
+The SDK checks each group, a document plus its nested `attachments`, against your FAB index. Availability is all or nothing per group: one missing member makes the whole group unavailable.
+
+| Method | When the check runs | If the group is unavailable |
+| --- | --- | --- |
+| `setSuggestedAttachments()` | In the background while the suggestion card is visible. | After **Attach**, the group appears in the chat input, disabled, and blocks sending until the user removes it. A notice offers **Try again** and **Remove**. |
+| `addAttachments()` | Right away. The attachments show a loading state, and sending waits for the check. | The group stays in the chat input, disabled, and blocks sending until the user removes it. A notice offers **Try again** and **Remove**. |
+
+`HostFile` entries skip the check and upload right away.
+
+#### Match the source
+
+The check looks for the document in the FAB index of the `source` you pass. A document indexed under one source is unavailable when you pass another, even a related one. For example, a criminal-law document passed as `one_it_legale_civile` instead of `one_it_legale_penale` fails the check.
+
+- **`Unknown research source: <source>`** means Libra isn't set up for that source in this environment. This is Libra configuration, so contact the Libra team.
+- **Each entry is one document.** IDs are matched exactly: wildcards and prefixes aren't supported. A document stored as several FAB records can't be attached as one; pass each record, or group related files with nested `attachments`.
+- **A console error for a suggested document that isn't in the index is expected.** The user sees the document as unavailable after **Attach**.
+
+### Legal software documents
+
+Legal software sources (`kleos`, `legisway`, `notaionext`, `suitenext`) aren't in the FAB index. Libra links the document into the active project's Chat uploads folder and starts indexing it. It's available when indexing finishes. It's disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing doesn't finish within 90 seconds. A suggested legal software document is linked, and indexed, only when the user selects **Attach**, because linking adds a file to the user's project.
+
+Once Libra has indexed it, selecting the attached document opens it in the [Document Viewer](/capabilities/document-viewer) instead of opening `url` in a new tab.
+
+The SDK doesn't expose these checks or their results to your product. Make sure the research documents you suggest or attach are in your FAB index, keep product permissions and entitlement decisions in your product, and don't depend on the internal availability request or response shape.
+
+## Files and storage
+
+An `ExternalDocument` stays on your system: provide URLs your product can resolve, and keep storage, access control, and URL lifetime in your product. A `HostFile` is uploaded into the user's active Libra project, the same way as a file the user picks in the chat.
+
+<Note>
+The public SDK doesn't provide a document availability-check method or a way to list or remove files that are already uploaded to a project. Keep file access and availability decisions in your product or its backend.
+</Note>
+
+See [Current-document context](/capabilities/current-document) for what users see.

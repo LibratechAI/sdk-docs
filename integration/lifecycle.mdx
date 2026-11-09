@@ -1,0 +1,129 @@
+---
+title: "Lifecycle and configuration"
+description: "Initialize, attach, hide, and remove the Libra SDK, and choose its configuration."
+---
+
+The SDK renders Libra in an isolated iframe. Your product owns the surrounding UI and decides when and where the SDK window appears; the SDK owns the chat and its session.
+
+## Minimum lifecycle
+
+Call `Libra.init()` once after `document.body` exists. The SDK creates its iframe but defers starting the chat session until the first `Libra.attach()` call. Attach it to a visible host-owned container when the user opens the experience.
+
+```js
+import { Libra } from '@libra/sdk';
+
+Libra.init({
+	productId: 'wko_de',
+	onClose: () => {
+		hideLibraPanel();
+		Libra.detach();
+	}
+});
+
+openButton.addEventListener('click', () => {
+	showLibraPanel();
+	Libra.attach('libra-panel');
+});
+```
+
+The target element must exist and have usable dimensions when it is attached. `Libra.detach()` hides the widget without removing the iframe, so the conversation, scroll position, and in-progress streaming response can be preserved for a later `attach()`.
+
+<Warning>
+Call `init()` once per page. A second `init()` without `destroy()` is ignored with a console warning, and its configuration, including a changed `productId` or `locale`, is dropped.
+</Warning>
+
+The SDK reports most lifecycle mistakes in the console instead of throwing:
+
+| Situation | What happens |
+| --- | --- |
+| A method is called before `init()` | Logs an error and does nothing. |
+| A session method, such as `setSuggestedAttachments()`, is called before the first `attach()` | Logs an error: there is no active session yet. |
+| `attach()` gets an ID that doesn't exist | Logs an error and does nothing. |
+| The attached element is removed from the DOM, for example by a route change | The SDK detaches itself and logs a warning. Call `attach()` with the new element; the session is preserved. |
+| `init()` runs before `document.body` exists | Throws. Call `init()` after `DOMContentLoaded`. |
+
+### Reopen or remove the widget
+
+Use `detach()` when the host temporarily hides the panel and may reopen it. The iframe remains alive and the session is preserved.
+
+```js
+Libra.detach();
+
+// Later, reuse the same session in the same or another target.
+Libra.attach('libra-panel');
+```
+
+Use `destroy()` when the host is finished with the SDK instance or needs to reinitialize it with a different configuration. It removes the iframe, listeners, document viewer, and other SDK resources. Call `Libra.init()` again before the next `attach()`.
+
+```js
+Libra.destroy();
+Libra.init({ productId: 'wko_de' });
+```
+
+### What the user sees
+
+| Your product calls | What the user sees |
+| --- | --- |
+| `init()` | Nothing yet. The SDK makes no network requests until the first `attach()`. |
+| First `attach()` | The SDK window appears over your container with a loading screen until the chat is ready. Signed-out users see the [sign-in screen](/capabilities/sign-in-and-onboarding). If startup fails, an error page appears instead of an empty window. |
+| `attach()` after a page reload | The user's last active chat reopens. With `restorePreviousChat: false`, a blank chat opens instead. See [Start a new chat](/integration/navigation-and-handoffs#start-a-new-chat). |
+| `detach()` | The SDK window disappears. The next `attach()` shows the same conversation, scroll position, and any answer still being written, even in a different container. |
+| `destroy()` | The SDK window is removed. |
+
+If your container leaves the page, for example on a route change, the SDK window disappears until you call `attach()` again.
+
+## Mounting and positioning
+
+By default, the SDK appends its fixed-position wrapper to `document.body`. Set `mountTarget` when the host needs the wrapper to participate in a product-owned stacking context, and lower `zIndex` from its default of `999999` to fit the host's layering:
+
+```js
+Libra.init({
+	productId: 'wko_de',
+	mountTarget: 'libra-root',
+	zIndex: 5
+});
+```
+
+The SDK does not move the iframe into the target. `attach()` continuously synchronizes the fixed wrapper to the target's viewport position and size, so scrolling, resizable panes, layout shifts, and animations remain aligned. The target must remain in the DOM for the SDK lifetime and should have stable, non-zero dimensions when attached.
+
+Some CSS properties on the target or its ancestors misplace the wrapper. See [Embedding and layout constraints](/integration/embedding-constraints) for the stacking context and the properties to avoid.
+
+## Header ownership
+
+Providing `onClose` enables the SDK-rendered Libra header and its close button. Users then see a header with the Libra wordmark and a close button above the chat; without `onClose`, there's no Libra header. The host still owns the surrounding panel or modal and should hide it before or while calling `Libra.detach()`, as in the [minimum lifecycle](#minimum-lifecycle) example.
+
+If the host already renders a product-aligned header, omit `onClose` and call `Libra.detach()` from the host's own close control. The callback controls the outer SDK header only; it does not replace the authenticated chat controls. See [SDK window and header](/capabilities/sdk-window) for what users see.
+
+## What the SDK stores
+
+The SDK iframe loads from a `blob:` URL, so it shares your page's origin and its `localStorage`. The SDK prefixes every key it writes with `libra:`, so its keys don't collide with yours. This is namespacing, not a separate storage partition.
+
+| State | Stored as | Lifetime |
+| --- | --- | --- |
+| Sign-in token (not in proxy mode) | `libra:token` | Removed on sign-out. |
+| Last active chat | `libra:activeChatId_<user ID>` | Reopened on the next page load, unless `restorePreviousChat` is `false`. Cleared when the user starts a new chat; kept across sign-out. |
+| Active project | `libra:activeProjectId_<user ID>` | Restored on the next page load. |
+| Suggested and attached host documents | Memory only | Lost on page load. Call `setSuggestedAttachments()` or `addAttachments()` again on each page. |
+
+As a result:
+
+- `libra:` keys appear in your browser's storage inspector.
+- Clearing site data, or calling `localStorage.clear()` in host code, signs the user out and forgets the last chat.
+- Scripts on your page can read the sign-in token. See [Deployment security](/integration/deployment-security#security-boundaries).
+
+## Not reported to your product
+
+The SDK reports sign-in through `onAuthStateChange` and `onAuthError`, citation clicks through `onCitationClick`, and the close button through `onClose`. It has no other events or state getters. In particular:
+
+- **Whether the SDK window is open.** Your product opens and closes it, so track that in your own code.
+- **When the user sends a message**, or what they send.
+- **When the user changes jurisdictions or research sources.**
+- **Failed requests after sign-in.** `onAuthError` reports only failed sign-in and sign-up attempts. A `401` or another error during a request doesn't reach your product; in proxy mode, your BFF sees it.
+
+To ask for a new event, use the [Product Requests & Feedback form](https://app.notion.com/p/Product-Requests-Feedback-277eb48252ec801685a5c40c98d3f50d).
+
+## Product ID
+
+`productId` is required. It identifies the product the integration represents: a legal-research product, a legal software product, `ra_micro`, or `libra` for Libra's own test integrations. `researchSources` is separate: it lists the more granular searchable sources selected in the chat. The complete identifier lists and the public signatures are in the [API reference](/reference/overview).
+
+For every option and method your product can set, with defaults, see [What you can configure](/integration/configuration).

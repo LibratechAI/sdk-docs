@@ -1,0 +1,715 @@
+---
+title: "Libra SDK 0.15.1"
+sidebarTitle: "SDK 0.15.1"
+description: "The @libra/sdk 0.15.1 README, as the SDK staging site publishes it."
+---
+
+<Note>
+Full documentation starts with SDK 0.16.0. For 0.15.1, this page shows the SDK README as the [SDK staging site](https://sdk.staging.libratech.ai/versions/v0.15.1/index.html) publishes it. To try this release, use its [playground](https://sdk.staging.libratech.ai/versions/v0.15.1/playground.html).
+</Note>
+
+Embeddable chat widget for integrating Libra's AI-powered legal research into any web application. Ships as a single JavaScript file that renders the full chat interface inside an isolated iframe — no external resources, no CSS conflicts, no setup beyond a single function call.
+
+## Installation
+
+Add the following to your `.npmrc`. You will need an `ARTIFACTORY_TOKEN` environment variable set to your WK Artifactory token.
+
+```
+@libra:registry=https://artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/
+//artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/:_authToken=${ARTIFACTORY_TOKEN}
+```
+
+```bash
+npm install @libra/sdk
+```
+
+## CDN Usage
+
+The same released SDK version is also promoted to WK CDN after a successful Artifactory publish.
+
+### ES module
+
+Example usage in an ES module-supporting environment (e.g. modern browsers, Vite, Webpack 5+):
+
+```html
+<script type="module">
+  import { Libra } from 'https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.js';
+
+  Libra.init({
+    productId: 'wko_de',
+    onClose: () => Libra.detach()
+  });
+</script>
+```
+
+### Classic script tag
+
+Example usage in a classic environment without module support:
+
+```html
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.umd.js"></script>
+<script>
+  const { Libra } = window.Libra;
+  Libra.init({
+    productId: 'wko_de',
+    onClose: () => Libra.detach()
+  });
+</script>
+```
+
+## Quick Start
+
+Call `Libra.init()` once at app startup, then `Libra.attach()` when the user opens the widget. If you provide `onClose`, the SDK renders its Libra header and calls that callback when the built-in close button is clicked; the host product owns the close behavior, usually hiding the product-owned SDK wrapper, such as a side panel or modal, and calling `Libra.detach()`. Without `onClose`, the SDK header is not rendered. The iframe is created on `init()` but the chat session does not start — and no network requests are made — until the first `attach()`.
+
+```html
+<button id="open-chat">Open Chat</button>
+<div id="chat" style="position: fixed; right: 16px; bottom: 16px; width: 400px; height: 600px;"></div>
+```
+
+```javascript
+import { Libra } from '@libra/sdk';
+
+Libra.init({
+  productId: 'wko_de',
+  onClose: () => {
+    Libra.detach();
+  }
+});
+
+document.getElementById('open-chat').addEventListener('click', () => {
+  Libra.attach('chat');
+});
+```
+
+The SDK creates an iframe on `document.body`, positions it over your container when attached, handles authentication via an Auth0 popup, and renders the chat interface. The session (conversation, scroll position, in-progress streaming) is preserved across `detach()` / `attach()` cycles.
+
+## Header Ownership
+
+The SDK renders its Libra headbar only when `onClose` is provided. The headbar includes the Libra wordmark and close button; clicking close calls `onClose`.
+
+The host product owns close behavior. In most integrations, `onClose` should hide the product-owned SDK wrapper, such as a side panel or modal, and call `Libra.detach()`:
+
+```javascript
+Libra.init({
+  productId: 'wko_de',
+  onClose: () => {
+    Libra.detach();
+  }
+});
+```
+
+If your product already renders a product-aligned header or close button around the widget, omit `onClose` and call `Libra.detach()` from your own close control.
+
+Header ownership only controls this outer Libra wordmark/close headbar. The authenticated chat screen still renders the existing SDK chat controls.
+
+## API Reference
+
+### `Libra.init(config)`
+
+Initializes the SDK and creates the iframe. Call after `document.body` exists. Startup is deferred until the first `attach()`.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `mountTarget` | `string \| HTMLElement` | `document.body` | Element (or its ID) to mount the SDK wrapper into. See [Stacking Context](#stacking-context). |
+| `zIndex` | `number` | `999999` | `z-index` applied to the SDK wrapper. |
+| `baseUrl` | `string` | `"https://app.libratech.ai"` | Libra workspace URL. Used for main-app handoffs (opening settings, manage-team, etc. in a new tab) and as the origin for the auth popup. When `proxy` is set, API requests are routed through the proxy instead — `baseUrl` no longer determines where backend calls go. |
+| `proxy` | `{ url: string; headers?: Record<string, string>; credentials?: RequestCredentials }` | — | Route all SDK API requests through a BFF proxy instead of directly to `baseUrl`. When set, the localStorage token flow is disabled — auth is handled server-side by the proxy. `headers` are merged into every proxied request. `credentials` defaults to `'same-origin'`. See [Proxy Mode](#proxy-mode-bff). |
+| `researchSources` | `ResearchSourceId[]` | `[]` | Pre-selected research sources. (e.g. `['one_it_legale_civile', 'one_it_fiscale_professional']`) |
+| `productId` | `ProductId` | **Required** | Identifier of the legal-research (e.g. `'one_it'`) or legal software (e.g. `'kleos'`) product this integration represents. This is different from `researchSources` — one product maps to one or more research sources. |
+| `locale` | `SupportedLocale` | Browser detection | BCP-47 locale code (e.g. `'de-DE'`). Must be registered via `locales` (npm) or a `<script>` tag (CDN) — `init()` throws otherwise. Defaults to browser detection, which falls through to `en-US` when no registered locale matches. See [Locales](#locales). |
+| `locales` | `LibraLocaleBundle[]` | `[]` | Additional locale bundles to register (npm consumers). See [Locales](#locales). |
+| `onClose` | `() => void` | — | Optional callback fired when the SDK header close button is clicked. Supplying it enables the SDK header; the host should hide the product-owned SDK wrapper and call `Libra.detach()`. |
+| `onAuthStateChange` | `(state: LibraAuthState) => void` | — | Fired after the SDK restores a session, completes an interactive login, or signs out. |
+| `onAuthError` | `(error: LibraAuthError) => void` | — | Fired when an interactive login attempt is unsuccessful. |
+| `onCitationClick` | `(event: CitationClickEvent) => void` | — | Fired when the user clicks any citation that resolves to a research source — both research-source results and host-supplied external documents. The SDK opens `event.data.url` in a new tab by default; inspect `event.data.source` and call `event.preventDefault()` to claim the citations you handle in-place. If omitted, every citation opens in a new tab. See [Citation clicks](#citation-clicks). |
+
+### `Libra.attach(elementOrId)`
+
+Visually positions the widget over the given target element. The iframe is never moved in the DOM — only its CSS position is updated — so the chat session and any in-progress streaming response are fully preserved across re-attaches. Accepts a DOM element or a string element ID. Can be called while the iframe is still loading.
+
+### `Libra.detach()`
+
+Hides the widget. The iframe stays alive so the session is preserved. Call `attach()` again to reposition it — even to a different container.
+
+### `Libra.setSuggestedAttachment(attachment)`
+
+Suggests an attachment related to what the user is currently viewing. A suggestion chip ("+ [title]") appears above the message input, labeled with the root document's title, and the SDK checks the whole group (root plus any `attachments`) against the integrator's FAB index in the background by calling `POST /api/v1/external-documents/availability`. When the chip is clicked, every missing group member is attached to the composer if the group is available and the LLM can retrieve their content; if the check is still pending, the chip shows loading and attaches after it succeeds, or shows unavailable/error feedback if it fails. If the background check already found the group unavailable (`409`) or hit another error, the first click shows that result without checking again; a later click retries. Calling this again replaces the previous suggestion.
+
+Optional `attachments` let you suggest related files (for example PDFs) alongside the primary document. Each attachment has the same required fields as the root document (`id`, `title`, `url`, `source`). Availability is atomic per group: a partial FAB miss attaches nothing and shows the "Content unavailable" notice. The chip stays visible until every group member (root + attachments) is already attached.
+
+When the LLM cites the document in its response, the citation behaves like any other — see [Citation clicks](#citation-clicks) for how to intercept navigation. An external-document citation arrives with `kind: 'external_document'`.
+
+```javascript
+Libra.setSuggestedAttachment({
+  id: 'doc-uuid-123',
+  title: 'Article 162 [Tort]',
+  url: 'https://research.example.com/document/doc-uuid-123',
+  source: 'wko_de',
+  attachments: [
+    {
+      id: 'pdf-attachment-1',
+      title: 'Related PDF',
+      url: 'https://research.example.com/files/pdf-attachment-1.pdf',
+      source: 'wko_de'
+    }
+  ]
+});
+```
+
+A suggestion can also be a **host file** the host already holds in memory — for hosts with no document backend of their own (for example an Electron desktop app). Pass `{ file }` instead of a document descriptor; the chip shows the file name with a generic document icon, and clicking it uploads the file into the user's active Libra project through the chat's normal upload path (same size, type and project rules as a file picked in the chat). The LLM then reads it through Libra's own pipeline — no research source is involved. The chip hides while a composer file with that name exists. Either kind replaces the previous suggestion.
+
+```javascript
+// `file` is a File (e.g. from an <input type="file">, a drop event, or `new File([bytes], name)`),
+// or a Blob together with a `title` that names it.
+Libra.setSuggestedAttachment({ file, title: 'Mandate agreement.pdf' }); // title is optional
+```
+
+### `Libra.clearSuggestedAttachment()`
+
+Clears the current suggestion (e.g. when the user navigates away from the document).
+
+### `Libra.addAttachments(attachments)`
+
+Attaches documents to the current chat's message input directly, without a chip. The attachments appear immediately in a loading state while each attachment (with its `attachments`) is checked for availability as its own group; sending is blocked until the check finishes. An available group becomes regular attachments. A group that is unavailable (409) or whose check fails stays in the input as disabled attachments ("Content unavailable" on hover) that block sending until the user removes them. Send stays enabled; trying to send shows the notice below again instead of sending. A notice above the input reports how many files couldn't be attached, with **Try again** (checks the failed groups again) and **Remove** (removes them); it hides after 6 seconds and shows again on the next failure. Documents already in the message input are skipped; re-adding a disabled one checks it again. Entries missing a required field are ignored and logged to the console.
+
+```javascript
+Libra.addAttachments([
+  {
+    id: 'doc-uuid-123',
+    title: 'Article 162 [Tort]',
+    url: 'https://research.example.com/document/doc-uuid-123',
+    source: 'wko_de'
+  }
+]);
+```
+
+Host files (`{ file }`, see [`setSuggestedAttachment`](#librasetsuggestedattachmentattachment)) can be mixed into the same call. They skip the availability check and are uploaded right away into the active project, appearing as ordinary document chips while they upload. A file that is still queued under the same name and size is not queued twice.
+
+```javascript
+Libra.addAttachments([{ file: pdfFile }, { file: contractBlob, title: 'Contract.docx' }]);
+```
+
+#### Legal software documents
+
+For a legal software product (`source: 'kleos' | 'legisway' | 'notaionext' | 'suitenext'`), `id` is the product's own document id. Instead of an availability check, Libra links the document into the active project's Chat uploads folder, starts indexing it, and polls its index status: the attachment shows loading dots while the document is indexing, then becomes available once it is ready, or disabled if it cannot be used (the user has no connection to the product, the product is not enabled for the team, or indexing did not finish within 90 seconds). A suggested legal software document is only linked when the user clicks its chip.
+
+```javascript
+Libra.addAttachments([
+  {
+    id: '9585',
+    title: 'Kaufvertrag.pdf',
+    url: 'https://kleos.example.com/documents/9585',
+    source: 'kleos'
+  }
+]);
+```
+
+### `Libra.clearAttachments()`
+
+Removes every host-provided attachment from the current chat's message input — those added with `addAttachments()` and those the user attached from a suggestion chip. A suggestion click that has not finished attaching is cancelled. Files the user uploaded or picked themselves are kept, and already-sent messages are not affected. Host files handed over with `{ file }` become regular uploads once attached and are not removed by this call.
+
+### `Libra.setDocumentSuggestion(doc)` / `Libra.clearDocumentSuggestion()` (deprecated)
+
+Still work, but log a deprecation warning. They take the same object, so migrating is a rename: `setDocumentSuggestion(doc)` → `setSuggestedAttachment(doc)` and `clearDocumentSuggestion()` → `clearSuggestedAttachment()`.
+
+### `Libra.openChatById(chatId)`
+
+Opens an existing Libra chat in an attached SDK session. For main-app citation links, the product owns extracting `libraChatId` from the URL, attaching the SDK, and cleaning up the URL if needed:
+
+```javascript
+const chatId = new URL(window.location.href).searchParams.get('libraChatId');
+
+await Libra.attach('chat');
+
+if (chatId) {
+  await Libra.openChatById(chatId);
+}
+```
+
+Call `openChatById()` after `Libra.attach()`; it logs and does nothing when there is no active SDK session.
+
+### Citation clicks
+
+The assistant's answers contain citations — to research-source results (Wolters Kluwer, Legal Intelligence, web search, EUR-Lex, …) and to host-supplied external documents. By default, clicking a citation opens its URL in a new tab.
+
+Provide `onCitationClick` in `Libra.init()` to handle navigation in-place. It fires for **every** citation that resolves to a research source. The SDK still opens the citation in a new tab by default — call `event.preventDefault()` to claim the ones you want to handle yourself. You don't need to open the rest; just leave them alone:
+
+```javascript
+Libra.init({
+  productId: 'one_it',
+  onCitationClick: (event) => {
+    // event.data.source is the research source, e.g. 'one_it_legale_civile'.
+    if (!event.data.source.startsWith('one_')) return; // not ours — SDK opens it in a new tab
+    event.preventDefault();             // we'll handle this one
+    openInMyPlatform(event.data.url);   // scroll to event.data.content
+  }
+});
+```
+
+The event has:
+
+- **`data`** — the clicked citation:
+  - **`source`** — the canonical `ResearchSourceId` that owns the citation, e.g. `'wko_de'`. Covers both research-source results and host-supplied external documents (see [`setSuggestedAttachment`](#librasetsuggestedattachmentattachment)).
+  - **`url`** — the navigation target. May include a `documentAnchor` query parameter for scroll-to-section.
+  - **`content`** — the extracted text of the cited passage. **Present** when the user clicked the citation badge or "To source" in the tooltip (a specific passage); **absent** when they clicked "View source" in the citation list (the full document).
+- **`preventDefault()`** — call it to stop the SDK from opening `data.url` in a new tab, when you're handling navigation yourself.
+
+Citations that don't resolve to a research source never reach the callback and keep their default behavior.
+
+### Document viewer
+
+Citations to uploaded documents, and Preview on a generated Word document, open Libra's PDF viewer **beside the chat**, in a second iframe the SDK places over the free width next to your `attach()` target. Edit on that card (and in the viewer toolbar) opens the drafting route on the main Libra app. The chat iframe never changes size, so the chat and SDK header stay the original width and the chat's menus and dialogs keep their own viewport. The PDF is a padded dialog over a dimmed backdrop. On very small viewports — or when there is no room beside the widget — the viewer fills the window on top of the chat instead. Closes on Escape, the backdrop, or the viewer's close button. The pdf.js worker is a `blob:` URL — allow `blob:` on `worker-src` if you set that directive, otherwise on `script-src` (see [Browser Security Headers](#browser-security-headers)).
+
+### `Libra.setLocale(locale)`
+
+Updates the widget's UI language at runtime. Translated strings re-render in place, the chat session is preserved, and the locale is persisted in the iframe's `localStorage`. The target locale must have been registered at init time (see [Locales](#locales)).
+
+```javascript
+Libra.setLocale('de-DE');
+```
+
+## Locales
+
+The SDK bundle ships only the `en-US` translations to keep the default download small. Any other locale is published as a separate side-loadable file under `dist/locales/<code>.{js,umd.cjs}`. Load only the languages you need — they fetch in parallel with the main bundle, so you pay download cost roughly equal to `max(main, locale)` instead of `main + all locales`.
+
+Both `Libra.init({ locale })` and `Libra.setLocale(locale)` throw synchronously when called with an unregistered locale, so the failure surfaces at the call site instead of silently rendering English. Browser-detected fallback (when `locale` is unset at init) still resolves to `en-US` if no registered locale matches.
+
+### npm consumers
+
+Import the locale defaults and pass them to `Libra.init({ locales })`:
+
+```javascript
+import { Libra } from '@libra/sdk';
+import deDE from '@libra/sdk/locales/de-DE';
+import frCH from '@libra/sdk/locales/fr-CH';
+
+Libra.init({
+  productId: 'wko_de',
+  locale: 'de-DE',
+  locales: [deDE, frCH]
+});
+```
+
+### CDN consumers — classic script tag
+
+Each locale's UMD bundle self-registers into `window.__libraLocales__`, which `Libra.init()` drains automatically — no `locales` field needed:
+
+```html
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/libra.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/locales/de-DE.umd.js"></script>
+<script src="https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>/locales/fr-CH.umd.js"></script>
+<script>
+  const { Libra } = window.Libra;
+  Libra.init({ locale: 'de-DE' });
+</script>
+```
+
+The order of the locale script tags relative to the main `libra.umd.js` does not matter as long as all of them load before `Libra.init()` is called.
+
+### CDN consumers — ES module
+
+Load the SDK and the locales you need in parallel, then pass the defaults to `init()`:
+
+```html
+<script type="module">
+  const cdnBase = 'https://cdn.wolterskluwer.io/wk/libra-sdk/<VERSION>';
+
+  const [{ Libra }, deDE, frCH] = await Promise.all([
+    import(`${cdnBase}/libra.js`),
+    import(`${cdnBase}/locales/de-DE.js`).then((m) => m.default),
+    import(`${cdnBase}/locales/fr-CH.js`).then((m) => m.default)
+  ]);
+
+  Libra.init({
+    productId: 'wko_de',
+    locale: 'de-DE',
+    locales: [deDE, frCH]
+  });
+</script>
+```
+
+The `Promise.all` ensures the locale bundles fetch in parallel with the SDK — overall wall-clock load time is roughly `max(libra.js, largest locale)` instead of the sum.
+
+### `Libra.destroy()`
+
+Removes the iframe and cleans up all resources. To re-create the widget afterwards, call `init()` again.
+
+### `Libra.signOut()`
+
+Signs the user out and shows the login screen.
+
+In [proxy mode](#proxy-mode-bff), removes the user's identity link on the backend (best-effort) — the next CTE re-auth requires re-linking.
+
+### Types
+
+All types are exported from `@libra/sdk`:
+
+```typescript
+import type {
+  LibraConfig,
+  LibraAuthState,
+  LibraAuthError,
+  LibraLocaleBundle,
+  Attachment,
+  ExternalDocument,
+  ExternalDocumentAttachment,
+  HostFile,
+  CitationClickEvent,
+  CitationClickEventData,
+  ProductId,
+  ResearchSourceId,
+  SupportedLocale
+} from '@libra/sdk';
+
+type LibraConfig = {
+  baseUrl?: string;
+  mountTarget?: string | HTMLElement;
+  zIndex?: number;
+  researchSources?: ResearchSourceId[];
+  productId: ProductId;
+  locale?: SupportedLocale;
+  locales?: LibraLocaleBundle[];
+  proxy?: {
+    url: string;
+    headers?: Record<string, string>;
+    credentials?: RequestCredentials;
+  };
+  onAuthStateChange?: (state: LibraAuthState) => void;
+  onAuthError?: (error: LibraAuthError) => void;
+  onClose?: () => void;
+  onCitationClick?: (event: CitationClickEvent) => void;
+};
+
+type LibraLocaleBundle = {
+  code: string;
+  translations: Record<string, string>;
+};
+
+type CitationClickEventData = {
+  source: ResearchSourceId;     // owning research source, e.g. 'wko_de'
+  url: string;                  // navigation target (may include ?documentAnchor)
+  content?: string;             // cited-passage text — present for "To source", absent for "View source"
+};
+
+type CitationClickEvent = {
+  data: CitationClickEventData; // the clicked citation
+  preventDefault(): void;       // call to stop the SDK opening data.url in a new tab
+};
+
+type LibraAuthState =
+  | { status: 'authenticated'; source: 'existing_session' | 'signin' | 'signup' }
+  | { status: 'unauthenticated'; source: 'no_session' | 'signout' };
+
+type LibraAuthError = {
+  source: 'signin' | 'signup';
+  reason: 'popup_blocked' | 'popup_closed' | 'authentication_failed';
+};
+
+type Attachment = ExternalDocument | HostFile;
+
+type HostFile =
+  | { file: File; title?: string }  // a file the host holds in memory; title defaults to file.name
+  | { file: Blob; title: string };  // raw bytes need a title for the chip label and uploaded filename
+
+type ExternalDocument = {
+  id: string;
+  title: string;
+  url: string;
+  source: Exclude<ResearchSourceId, 'web_search'> | LegalSoftwareSourceId;
+  attachments?: ExternalDocumentAttachment[];
+};
+
+type ExternalDocumentAttachment = Omit<ExternalDocument, 'attachments'>;
+
+type ResearchProductId =
+  | 'wko_de' | 'egov_praxis_de'
+  | 'inview_legal_nl' | 'inview_tax_nl' | 'legal_intelligence_nl'
+  | 'inview_legal_be' | 'inview_tax_be' | 'socialeye_be' | 'monkey_be'
+  | 'lex_pl' | 'one_it' | 'sintact_ro'
+  | 'jogtar_hu' | 'aspi_cz' | 'aspi_sk';
+
+type LegalSoftwareProductId = 'kleos' | 'legisway' | 'notaionext' | 'suitenext';
+
+type ProductId =
+  | 'libra' // Libra-internal (playground, testing); not for customer integrations
+  | 'ra_micro' // host product without a research or Lens document source
+  | ResearchProductId
+  | LegalSoftwareProductId;
+
+type ResearchSourceId =
+  | 'wko_de' | 'lex_pl' | 'inview_legal_nl'
+  | 'inview_legal_be' | 'socialeye_be'
+  | 'one_it_legale_civile' | 'one_it_fiscale_professional' | 'one_it_fiscale_consulenza'
+  | 'one_it_lavoro' | 'one_it_legale_penale' | 'one_it_legale_amministrativo'
+  | 'jogtar_hu' | 'sintact_ro' | 'aspi_cz' | 'aspi_sk'
+  | 'legal_intelligence_nl' | 'inview_tax_nl' | 'inview_tax_be' | 'monkey_be'
+  | 'egov_praxis_de_jobcenter' | 'egov_praxis_de_sozial'
+  | 'htk_de_auslr' | 'htk_de_star';
+
+type LegalSoftwareSourceId = 'kleos' | 'legisway' | 'notaionext' | 'suitenext';
+
+type SupportedLocale =
+  | 'en-US'
+  | 'de-DE' | 'de-CH'
+  | 'es-ES'
+  | 'pl-PL'
+  | 'nl-NL' | 'nl-BE'
+  | 'fr-BE' | 'fr-CH' | 'fr-FR'
+  | 'it-IT' | 'it-CH'
+  | 'ro-RO' | 'hu-HU'   | 'cs-CZ' | 'sk-SK';
+```
+
+## Stacking Context
+
+By default the SDK appends its wrapper to `document.body` with `z-index: 999999`. Use `mountTarget` to mount the wrapper inside an element you control, then manage stacking via that element instead of fighting the global `z-index`.
+
+```javascript
+Libra.init({
+  productId: 'wko_de',
+  mountTarget: 'root',
+  zIndex: 5
+});
+```
+
+Give the mount element its own stacking context so the SDK's `z-index` is trapped inside it:
+
+```css
+#root { isolation: isolate; }
+```
+
+With this in place, host overlays inside `#root` can use any `z-index` (e.g. `12`) and stack above the widget naturally.
+
+### Constraints
+
+- Set `mountTarget` once at init. The iframe cannot be reparented later — moving an iframe in the DOM causes the browser to reload it, destroying the chat session.
+- The mount target must remain in the DOM for the SDK's lifetime.
+- If the configured target is missing at init time, the SDK falls back to `document.body`.
+- **The mount target and its ancestors must not establish a containing block for fixed positioning.** `transform`, `perspective`, `filter`, `backdrop-filter`, `will-change: transform | perspective | filter`, and `contain: paint | layout | content | strict` on any ancestor will silently misplace the widget. **`isolation: isolate` is safe** — it creates a stacking context without creating a containing block. The SDK emits a `console.warn` when it detects a known offender on the mount target's ancestor chain.
+
+## Authentication
+
+The SDK handles authentication automatically via an Auth0 popup. The auth screen offers both **Sign in** (existing users) and **Create account** (new users); new accounts are walked through onboarding inside the iframe before the chat mounts. Tokens are stored inside the iframe's `localStorage`, and subsequent loads skip the auth screen if a valid token exists. **No auth configuration is needed from the host application.**
+
+`onAuthStateChange` reports auth-status transitions:
+
+- `authenticated / existing_session` — valid session restored at startup
+- `authenticated / signin` — user just completed the sign-in popup
+- `authenticated / signup` — user just completed the sign-up popup (the iframe then runs onboarding before mounting the chat)
+- `unauthenticated / no_session` — no valid session at startup
+- `unauthenticated / signout` — session was cleared (normal mode), or the identity link was removed (proxy mode)
+
+`onAuthError` reports failed interactive sign-in or sign-up attempts with `reason`: `popup_blocked`, `popup_closed`, or `authentication_failed`. Failed attempts do not emit an auth-state event.
+
+**Account-state gating:** even after a successful login, the SDK may render an in-iframe overlay if the user's account is in a restricted state (onboarding incomplete, expired trial, canceled subscription, pending team membership, inactive subscription). The chat UI is not mounted while a gate is active. Signing out from any gate emits `unauthenticated / signout`.
+
+Call `Libra.signOut()` to programmatically sign the user out.
+
+## Proxy Mode (BFF)
+
+Setting `proxy` in `Libra.init()` routes all SDK API requests (`/api`, `/openai`, `/audio`, `/rag`) through a host-controlled Backend-for-Frontend (BFF) instead of directly to `baseUrl`. Auth becomes the BFF's responsibility — the localStorage token flow is disabled, and the browser never holds a Libra or customer token. Signing out (via `Libra.signOut()` or the widget's sign-out menu item) removes the user's identity link on the backend so the next CTE re-auth requires re-linking.
+
+### Prerequisites
+
+This integration runs against **staging and production only**.
+
+#### You provide to Libra
+
+Required for each env (staging, production):
+
+| Value | Example |
+|---|---|
+| IdP issuer (`iss`) | `https://login.wolterskluwer.eu` |
+| JWKS URL | `https://login.wolterskluwer.eu/pf/JWKS` |
+| Expected token audience (`aud`) [optional] | `DE.Libra.FAB` |
+
+#### Libra provides to you
+
+| Item | Value |
+|---|---|
+| Libra backend base URL | Staging `https://staging.libratech.ai` · Production `https://app.libratech.ai` |
+| Auth0 domain | Staging `libra-staging.eu.auth0.com` · Production `libra-prod.eu.auth0.com` |
+| Embedded audience (`audience`) | `https://embedded.libratech.ai/api` |
+| Product ID | See [Types](#types) |
+| M2M `client_id` / `client_secret` | Shared privately (one client per product) |
+| `subject_token_type` URN | per IdP — e.g. `urn:wk:oauth:token-type:oneid-access-token` (OneID) |
+
+### Implementation
+
+First, the host page points the widget at your BFF — this sends the session cookie with every SDK request instead of a browser-held token:
+
+```javascript
+Libra.init({
+  productId: 'wko_de',
+  proxy: {
+    // proxy.url must live on the host's own site — exact same-origin, the same
+    // registrable domain (app.example.com ↔ proxy.example.com), or a localhost
+    // proxy when the page itself is localhost. init() throws otherwise: the BFF
+    // is your own server, so anything further afield is rejected (prevents SSRF).
+    url: 'https://your-app.example.com/api/libra',
+    credentials: 'include'  // attach the session cookie, same-origin by default
+    // headers: { ... }     // optional; in case you use headers for auth with BFF
+  }
+});
+```
+
+Then the BFF runs the same logic for every proxied request (illustrative Python):
+
+```python
+def handle(request):
+    # your auth gate — Libra never sees the cookie
+    session = resolve_session(request.cookie)        # missing / expired → respond 401
+    check_csrf(request)                              # unsafe methods → respond 403
+    cid = request.header("X-Correlation-ID") or uuid4()
+
+    # the SDK sends X-Libra-SDK-Product-ID itself; the BFF adds these
+    headers = strip_browser_headers(request.headers)
+    headers["X-Libra-SDK-Product-Access-Token"] = session.access_token
+    headers["X-Libra-SDK-Product-ID-Token"] = session.id_token  # only needed for products with opaque access tokens (see Notes below)
+    headers["X-Correlation-ID"] = cid
+
+    try:
+        libra_token = get_or_exchange(session, cid)
+    except ExchangeFailed as err:
+        # Recover what you can HERE. The SDK is deliberately dumb about auth: it can only
+        # show its login/link screen (on 401) or a generic error screen (anything else).
+        # It can't refresh your session, retry the exchange, or interpret a reason — so
+        # anything recoverable must be recovered before a response reaches the browser.
+        if err.reason == "user_not_found":
+            # NOT an error — the user just has no linked Libra account yet. Forward the
+            # request WITHOUT Authorization; Libra answers 401 → SDK shows login/link screen.
+            return relay(request, headers)
+
+        # Everything else becomes the fixed error envelope below. The SDK acts only on
+        # the status — 401 → login screen, anything else → generic error screen — so map
+        # the reason to a status it understands:
+        status = {
+            "session_expired":       401,   # session couldn't be refreshed → user re-auths in your app
+            "identity_lookup_error": 503,   # transient CTE failure, retries exhausted
+            "auth_unavailable":      503,   # Auth0 5xx / timeout, retries exhausted
+            "upstream_error":        502,   # Auth0 429 or network error — nothing to recover
+        }[err.reason]
+        # Envelope shape is always the same. `reason` / `correlation_id` are for YOUR
+        # logs and support only — never put raw upstream detail (e.g. error_description)
+        # in the response that reaches the browser.
+        return Response(status, {"error": "embedded_auth_failed",
+                                 "reason": err.reason, "correlation_id": cid})
+
+    # a refresh inside get_or_exchange may have rotated the product tokens — re-read them
+    headers["X-Libra-SDK-Product-Access-Token"] = session.access_token
+    headers["X-Libra-SDK-Product-ID-Token"] = session.id_token
+    headers["Authorization"] = f"Bearer {libra_token}"
+    return relay(request, headers)                   # relay Libra's response unchanged
+
+
+def subject_token_for(session):
+    # The exchange subject_token MUST be a JWT. For most IdPs the product access token
+    # is itself a JWT; for other products it is opaque, so fall back to the id_token.
+    # See Notes below for the list of products with opaque access tokens.
+    return session.id_token if ACCESS_TOKEN_IS_OPAQUE else session.access_token
+
+
+def get_or_exchange(session, cid):
+    # REQUIRED cache: the SDK bursts calls on load; a fresh exchange per call trips
+    # Auth0's rate limit. Keyed per user, ~60s TTL, never shared across users.
+    subject_token = subject_token_for(session)        # the JWT we actually exchange
+    if cache.has(subject_token):
+        return cache.get(subject_token)
+
+    reason = None
+    for attempt in range(3):                          # 1 attempt + up to 2 retries
+        res = exchange(subject_token, cid)
+        if res.status == 200:
+            token = res.json["access_token"]
+            cache.set(subject_token, token, ttl=60)  # never log or share this token
+            return token
+
+        reason = classify_failure(res)               # explicit reason code — see below
+        if reason == "invalid_subject_token":
+            # the customer token expired. Only the BFF holds the session, so it must
+            # recover HERE and never forward this to the SDK: refresh, then retry.
+            if not session.refresh():
+                raise ExchangeFailed("session_expired")
+            subject_token = subject_token_for(session)   # refresh may have rotated it
+            continue
+        if reason in ("identity_lookup_error", "auth_unavailable"):
+            sleep(backoff(attempt))                   # transient — short backoff (~250ms), then retry
+            continue
+        break                                         # user_not_found / upstream_error — don't retry
+
+    # retries exhausted (or a non-retryable reason): surface the final reason to handle()
+    raise ExchangeFailed(reason)
+
+
+def exchange(subject_token, cid):
+    # RFC 8693 token exchange against the Libra Auth0 tenant
+    return http.post(f"https://{AUTH0_DOMAIN}/oauth/token", form={
+        "grant_type":         "urn:ietf:params:oauth:grant-type:token-exchange",
+        "subject_token":      subject_token,         # must be a JWT — see subject_token_for
+        "subject_token_type": SUBJECT_TOKEN_TYPE,    # per-IdP URN, provided by Libra
+        "audience":           "https://embedded.libratech.ai/api",
+        "scope":              "openid email profile",
+        "client_id":          CLIENT_ID,             # M2M creds, delivered privately
+        "client_secret":      CLIENT_SECRET,
+        "product_id":         PRODUCT_ID,
+        "correlation_id":     cid,
+    })
+
+
+def classify_failure(res):
+    # Turn a failed exchange response into a stable reason code:
+    #
+    #   403  → a CTE deny. error_description has the form "<reason>:<base64 details>";
+    #          the reason is the text before the first colon — e.g. user_not_found,
+    #          invalid_subject_token, identity_lookup_error.
+    #   5xx / timeout → Auth0 itself is down or slow.
+    #   anything else (429, network errors) → generic upstream failure.
+    #
+    # NEVER relay error_description to the browser — it can carry internal detail.
+    # Surface only the reason code.
+    if res.status == 403:
+        return res.json["error_description"].split(":", 1)[0]
+    if res.status >= 500 or res.timed_out:
+        return "auth_unavailable"
+    return "upstream_error"                           # Auth0 429, network errors, anything else
+```
+
+#### Notes
+
+- **`X-Libra-SDK-Product-ID-Token`** is only needed for products (`aspi_cz`, `aspi_sk`, `jogtar_hu`) because the access token is opaque.
+- **`X-Correlation-ID`** is your trace key — one UUID per request (or echo an inbound one), sent to Auth0 as `correlation_id`, to Libra as the header, and echoed in the error envelope.
+- **Never** log tokens (log the correlation ID instead), cache SDK responses, share a token across users, persist it, or return any token to the browser.
+- **Error monitoring on the BFF is required** (Sentry, Crashlytics, Datadog, or equivalent). The SDK only ever shows a generic error screen, so the BFF is the single place where auth failures are observable — report every enveloped error and every exhausted retry, tagged with its `correlation_id`. When a user reports a problem, that correlation ID is what both your support and Libra's will use to trace the request end to end. Never attach tokens to the report.
+
+## Browser Security Headers
+
+The SDK renders the chat UI in a `blob:` iframe generated by the host page. Safari applies host-page framing CSP to that generated iframe document, so restrictive framing headers can block the SDK even though no network request is made for the `blob:` URL.
+
+Products that embed the SDK must allow their own `blob:` iframe:
+
+```
+Content-Security-Policy: frame-ancestors 'self'; frame-src 'self' blob:; script-src 'self' blob:; worker-src 'self' blob:
+X-Frame-Options: SAMEORIGIN
+```
+
+`worker-src` governs dedicated workers (including the pdf.js `blob:` worker). If you set `worker-src`, it is checked first — `worker-src 'self'` without `blob:` blocks that worker even when `script-src` allows `blob:`; pdf.js then falls back to parsing on the main thread and the browser logs a CSP violation. If you omit `worker-src`, browsers fall back to `script-src` (and to `child-src` on older engines), so `script-src … blob:` is enough.
+
+Do not use `frame-ancestors 'none'` or `X-Frame-Options: DENY` on SDK-enabled pages. This Safari-specific CSP behavior blocks the SDK's generated iframe document before the chat app can start.
+
+## Browser Permissions
+
+If your host page sets a restrictive `Permissions-Policy` header, you must allow `microphone` for voice input to work — otherwise it will be blocked inside the iframe. The SDK iframe inherits your page's origin, so allowing `self` is sufficient:
+
+```
+Permissions-Policy: microphone=(self)
+```
+
+If your page does not set a `Permissions-Policy` header at all, no configuration is needed.
+
+## Isolation Guarantees
+
+The SDK runs the chat interface inside an `<iframe>` loaded from a blob URL with all assets inlined:
+
+- **Zero external requests at load time** — the bundle is self-contained
+- **Full CSS isolation** — host styles cannot affect the widget and vice versa
+- **Host-controlled CSP** — the blob URL iframe is generated by the host page; because of Safari-specific CSP enforcement, SDK-enabled pages must allow same-origin `blob:` frames as described above
+- **Session persistence** — `attach()` / `detach()` only update the iframe's CSS position, so chat state (conversation, scroll, in-progress streaming) is preserved across re-attaches

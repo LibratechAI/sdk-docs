@@ -1,0 +1,99 @@
+---
+title: "FAQ"
+description: "Short answers to the questions integrators ask most, with links to the full details."
+---
+
+These come from the questions integrators ask most often on [Libra SDK Integration - Dev chat](https://teams.microsoft.com/l/channel/19%3Aae4937fe4c7a4c40b45fb2c9bf349505%40thread.tacv2/Libra%20SDK%20Integration%20-%20Dev%20chat?groupId=91f72c7b-9471-43fd-bfd7-3b870128f4b7&tenantId=8ac76c91-e7f1-41ff-a89c-3553b2da2c17) channel on Microsoft Teams. For anything not covered here, see [Support](/status/overview#support).
+
+## Authentication and linking
+
+<AccordionGroup>
+  <Accordion title='Token exchange returns "user_not_found". Is that an error?'>
+    No. The user isn't linked to a Libra account yet. Forward the request without `Authorization`: Libra returns `401`, the SDK shows sign-in, and signing in creates the link. See [`user_not_found` is expected](/integration/bff-authentication#user_not_found-is-expected).
+  </Accordion>
+  <Accordion title='"This account is already connected to another user" or "account_in_use". How do I fix it? Do the emails have to match?'>
+    One of the two accounts is already linked to someone else. An account in your product links to one Libra account for your product, and the reverse. The emails don't need to match. Signing out of the SDK in proxy mode removes the link; to check or reset a link, contact the Libra team. See [Linking rules](/integration/bff-authentication#linking-rules).
+  </Accordion>
+  <Accordion title='Token exchange fails with "invalid_subject_token", "access_denied", "Hostname and client_id does not match", or a 401. What is wrong?'>
+    `access_denied` wraps the real reason. `invalid_subject_token` means Libra couldn't validate your token, `Hostname and client_id does not match` means the credentials belong to the other environment, and a `401` with a fresh token usually means the wrong `audience`. See [Troubleshooting](/integration/bff-authentication#troubleshooting).
+  </Accordion>
+  <Accordion title="How long should the BFF cache the exchanged token, and what are the rate limits?">
+    Cache the Libra token per user and combine concurrent exchanges into one. Auth0 allows a burst of 15 exchanges, then 15 per second, shared by every product in the tenant; over the limit, every client gets `429` for up to about a minute. See [Rate limits and caching](/integration/bff-authentication#rate-limits-and-caching).
+  </Accordion>
+  <Accordion title="Which subject token do I send, which claims does Libra need, and is aud required?">
+    Send an RS256 JWT with `iss` and `sub`, verifiable at your JWKS URL. `aud` is optional and not checked. Libra uses the token's own expiry. See [You provide to Libra](/integration/bff-authentication#you-provide-to-libra).
+  </Accordion>
+  <Accordion title="New users hit a screen after sign-up. Can we customize or skip onboarding?">
+    New users complete onboarding, including email verification, before the chat opens. Your product can't change or skip it, or preselect answers such as the country. See [Sign-in and onboarding](/capabilities/sign-in-and-onboarding).
+  </Accordion>
+  <Accordion title='What do "V1" and "V2" mean?'>
+    They're shorthand used in the integration channel. V1 is standard sign-in with the Libra popup; see [Authentication](/integration/authentication). V2 is proxy mode, where your BFF signs users in; see [BFF and proxy authentication](/integration/bff-authentication).
+  </Accordion>
+</AccordionGroup>
+
+## Running a BFF
+
+<AccordionGroup>
+  <Accordion title="The SDK works without the BFF, but streaming, chat history, uploads, sign-out, or voice fail through it.">
+    The BFF limits what the SDK can do. Keep streaming requests open for several minutes, allow large bodies (otherwise `413`), pass multipart uploads through unchanged (otherwise `422`), allow `DELETE`, and keep WAF and CSRF rules from blocking SDK requests. See [Proxy requirements](/integration/bff-authentication#proxy-requirements).
+  </Accordion>
+  <Accordion title="Can the BFF cache or skip SDK requests? Does link-init need special handling? Do I still need baseUrl with proxy.url?">
+    Relay every request unchanged, including `link-init`, and don't cache responses. Set `baseUrl` too: the sign-in popup opens on `baseUrl`, which defaults to production, so set it to staging when you test there. See [Proxy requirements](/integration/bff-authentication#proxy-requirements).
+  </Accordion>
+</AccordionGroup>
+
+## Browser and security headers
+
+<AccordionGroup>
+  <Accordion title="Sign-in works locally but fails on our domain, a port, or a preview subdomain.">
+    Your page's origin must be on Libra's trusted-origin list for that environment. An entry without a port allows any port, and `https://*.example.com` covers subdomains. Ask the Libra team to add your origins. See [Host origins](/integration/trusted-origins#host-origins).
+  </Accordion>
+  <Accordion title="Safari blocks the SDK frame.">
+    Safari applies your page's framing policy to the SDK's `blob:` frame. Allow `frame-src 'self' blob:` and `frame-ancestors 'self'`, and don't send `X-Frame-Options: DENY`. See [Framing and Permissions Policy](/integration/deployment-security#framing-and-permissions-policy).
+  </Accordion>
+  <Accordion title="Which CSP do we need? Does the script hash change per environment?">
+    The inline-script hashes change with each SDK version, not per environment. The PDF viewer needs `blob:` in `worker-src`, and in `connect-src` if you set it. See [Deployment security](/integration/deployment-security).
+  </Accordion>
+</AccordionGroup>
+
+## Documents and sources
+
+<AccordionGroup>
+  <Accordion title='A suggested or attached document is "not available", or I see "Unknown research source". Why?'>
+    The document must be in the FAB index of the `source` you pass, so check that you pass the right source. `Unknown research source` means Libra isn't set up for that source in this environment; contact the Libra team. See [Match the source](/integration/attachments#match-the-source).
+  </Accordion>
+  <Accordion title="Can one suggestion cover several documents, a PDF version, or a document split across FAB records?">
+    `setSuggestedAttachments()` takes several documents, and nested `attachments` group related files such as a PDF. Wildcard or prefix IDs, and one document stored as several FAB records, aren't supported. See [Suggest attachments](/integration/suggestions) and [Match the source](/integration/attachments#match-the-source).
+  </Accordion>
+  <Accordion title="How do I preselect research sources, and does the selection reset?">
+    Pass `researchSources` to `Libra.init()`. The user's changes then last for the session, across projects, new chats, and messages; a page reload starts again from `researchSources`. See [Your product preselects sources](/capabilities/research-sources-and-citations#your-product-preselects-sources).
+  </Accordion>
+  <Accordion title="Which source values can onCitationClick receive?">
+    A `ResearchSourceId`. For older chats, the SDK converts renamed source IDs to the current ones. `onCitationClick` replaced `onExternalDocumentCitationClick` in 0.11.0. See [Citation clicks](/integration/citation-clicks).
+  </Accordion>
+</AccordionGroup>
+
+## Versions, environments, and accounts
+
+<AccordionGroup>
+  <Accordion title="Is a 0.x version ready for production? Where do I get the package?">
+    Yes. A minor release can break the API, so read the Changelog before you upgrade. The package is on the Wolters Kluwer Artifactory npm registry, with an ES module and a UMD build, and on the CDN. See [Versions](/status/overview#versions) and the [Quickstart](/integration/quickstart).
+  </Accordion>
+  <Accordion title="How do I get a staging test account? Why can't I sign up on staging?">
+    Staging accepts sign-ups from Wolters Kluwer email addresses only. Ask the Libra team for test accounts. One account is enough unless you test account linking, where each test user in your product needs their own Libra account.
+  </Accordion>
+  <Accordion title="Chat history in the SDK differs from Libra Workspace.">
+    Chats belong to a Libra account, so different histories usually mean the user is signed in to different Libra accounts. A matching name doesn't prove it's the same account. In proxy mode, the link decides which account the SDK uses; see [Linking rules](/integration/bff-authentication#linking-rules).
+  </Accordion>
+</AccordionGroup>
+
+## What the SDK doesn't offer
+
+<AccordionGroup>
+  <Accordion title="Is there an event or getter for the window being open, a prompt being sent, a jurisdiction change, or a 401 during a request?">
+    No. `onAuthError` reports only failed sign-in and sign-up attempts. See [Not reported to your product](/integration/lifecycle#not-reported-to-your-product), and request new events through the [Product Requests & Feedback form](https://app.notion.com/p/Product-Requests-Feedback-277eb48252ec801685a5c40c98d3f50d).
+  </Accordion>
+  <Accordion title="Can we change the welcome text or other strings?">
+    Pick the sign-in description with `welcomeDescription`. Other strings can't be changed: translation keys aren't public API. See [Changing the wording](/integration/locales#changing-the-wording).
+  </Accordion>
+</AccordionGroup>

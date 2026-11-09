@@ -1,0 +1,61 @@
+---
+title: "Deployment security"
+description: "Configure browser security headers for the Libra SDK's isolated frames and workers."
+---
+
+The Libra SDK creates the chat and document-viewer surfaces in sibling `blob:` iframes. Those frames inherit the host page's browser security policy, so deployment headers must allow the resources the SDK needs without weakening unrelated host routes.
+
+## Content Security Policy
+
+The SDK's production frames contain inline bootstrap scripts and bundled module code. A strict host CSP must allow the SDK's `blob:` frames and the inline scripts that the host has approved. Prefer a hash-based policy for inline scripts rather than adding `unsafe-inline` to `script-src`.
+
+A representative policy shape is:
+
+```http
+Content-Security-Policy:
+  default-src * data: blob:;
+  script-src 'self' blob: 'sha256-<hash-for-each-sdk-inline-script>';
+  style-src * 'unsafe-inline';
+  worker-src 'self' blob:;
+```
+
+Treat this as a deployment pattern, not a copy-and-paste policy. Narrow hosts and paths to the sources used by your product. The inline-script hashes change with every SDK version, so recalculate them when you upgrade. They don't depend on the environment or your `Libra.init()` options, so one set of hashes works on staging and production for the same SDK version.
+
+The `blob:` allowance is relevant to the SDK's iframe documents and bundled workers. If the policy blocks the blob frame, the chat may remain blank. If it blocks `blob:` workers, document/PDF rendering can fail even when the chat frame loads.
+
+## Workers and document rendering
+
+The document viewer can use a dedicated worker to render a PDF. Test the viewer under the production CSP, not only the initial chat mount. Include `worker-src 'self' blob:` when the deployed viewer requires blob workers; otherwise the browser may report a worker CSP violation and the PDF will not render.
+
+The viewer also loads PDFs from `blob:` URLs. If your policy sets `connect-src`, include `blob:` in it.
+
+## Framing and Permissions Policy
+
+The SDK uses iframes created by the host page. Do not apply a host route policy that blocks the SDK's own frame from loading. Review `frame-src` or the equivalent CSP directive when your policy is more restrictive than the representative policy above.
+
+Safari applies the host page's framing policy to the SDK's generated `blob:` frames, even though they make no network request. On pages that load the SDK, allow your own origin and `blob:` frames:
+
+```http
+Content-Security-Policy: frame-ancestors 'self'; frame-src 'self' blob:
+X-Frame-Options: SAMEORIGIN
+```
+
+Don't use `frame-ancestors 'none'` or `X-Frame-Options: DENY` on those pages. Safari then blocks the SDK frame before the chat starts.
+
+Permissions Policy is host-owned. Grant only the browser features required by the integrated product and verify the SDK experience under the policy used in production. Do not use Permissions Policy to assume control of chat behavior or to expose private iframe messages; the public SDK contract remains `Libra.init()`, lifecycle methods, and documented callbacks.
+
+Voice input needs the microphone. If your page sets a `Permissions-Policy` header, allow it for your own origin; the SDK frames share it. Pages without the header need no change.
+
+```http
+Permissions-Policy: microphone=(self)
+```
+
+## Security boundaries
+
+- Blob URLs are implementation details of the SDK. Do not construct or message the SDK's frames directly.
+- Outside proxy mode, the Libra sign-in token is stored in your origin's `localStorage` as `libra:token`, so any script on the page can read it. Limit third-party scripts on SDK pages, or use [proxy mode](/integration/bff-authentication), where the browser holds no Libra token. See [What the SDK stores](/integration/lifecycle#what-the-sdk-stores).
+- Citation URLs are restricted by the SDK to HTTP(S) before default new-tab navigation.
+- A CSP does not authenticate proxy requests. The BFF must authenticate every request independently.
+- Test both the chat frame and the document viewer frame because they are separate SDK-created iframes.
+
+See [trusted origins](/integration/trusted-origins) for origin and token requirements, and [production readiness](/integration/production-readiness) for the release checklist.

@@ -1,0 +1,125 @@
+---
+title: "Suggest attachments"
+description: "Offer the documents or files the user is viewing or has selected as a card above the chat input."
+---
+
+Pass an array of `Attachment` objects to `Libra.setSuggestedAttachments()` after the session has started. The SDK shows a suggestion card above the chat input. The attachments, including any nested `attachments`, are added only when the user selects **Attach**. Each entry is its own group, the same as in [`addAttachments()`](/integration/add-attachments). See [Attachments and availability](/integration/attachments) for the attachment types.
+
+A new call replaces the previous suggestion, so pass the whole current selection each time it changes. Every call is a new suggestion, even with the same attachments. Call it when the user's context changes, such as navigation or a changed selection, not on every render.
+
+<Tabs>
+  <Tab title="Research product">
+    ```ts
+    import { Libra, type ExternalDocument } from '@libra/sdk';
+
+    const document: ExternalDocument = {
+    	id: 'case-1842',
+    	title: 'Acme v. Northstar',
+    	url: 'https://host.example.com/documents/case-1842',
+    	source: 'wko_de',
+    	attachments: [
+    		{
+    			id: 'case-1842-pdf',
+    			title: 'Acme v. Northstar PDF',
+    			url: 'https://host.example.com/documents/case-1842.pdf',
+    			source: 'wko_de'
+    		}
+    	]
+    };
+
+    await Libra.setSuggestedAttachments([document]);
+    ```
+
+    `id` is your document ID, and `source` is the research source that owns it.
+  </Tab>
+  <Tab title="Legal software">
+    ```ts
+    import { Libra, type ExternalDocument } from '@libra/sdk';
+
+    // The rows the user has selected in your document list.
+    const selection: ExternalDocument[] = [
+    	{
+    		id: '9585',
+    		title: 'Kaufvertrag.pdf',
+    		url: 'https://kleos.example.com/documents/9585',
+    		source: 'kleos'
+    	},
+    	{
+    		id: '9586',
+    		title: 'Nachtrag.pdf',
+    		url: 'https://kleos.example.com/documents/9586',
+    		source: 'kleos'
+    	}
+    ];
+
+    await Libra.setSuggestedAttachments(selection);
+    ```
+
+    `id` is the product's own document ID, and `source` is the legal software product.
+  </Tab>
+  <Tab title="Host file">
+    ```ts
+    import { Libra } from '@libra/sdk';
+
+    // file is a File or Blob your product already holds.
+    await Libra.setSuggestedAttachments([{ file, title: 'Mandate agreement.pdf' }]);
+    ```
+  </Tab>
+</Tabs>
+
+Pass an array, even for one attachment. A single object logs a console warning and shows no suggestion.
+
+<Warning>
+**FAB index required.** A research document can be used only if it's already in your product's FAB index. Libra checks the index but doesn't add documents to it. Legal software documents and host files are indexed by Libra instead. See [Availability boundary](/integration/attachments#availability-boundary).
+</Warning>
+
+Call `Libra.clearSuggestedAttachments()` when the selection in your product is no longer relevant:
+
+```ts
+await Libra.clearSuggestedAttachments();
+```
+
+## Label the card
+
+By default, the card shows the title of a single attachment and a count for several. An entry counts once, including its nested `attachments`. To always show a count, for example when the suggestion mirrors a row selection, set `attachments.suggestionLabel` in `Libra.init()`:
+
+```ts
+Libra.init({
+	productId: 'kleos',
+	attachments: { suggestionLabel: 'count' }
+});
+```
+
+| `suggestionLabel` | One attachment | Several attachments |
+| --- | --- | --- |
+| `'auto'` (default) | The attachment's title | **Selected files** with a count |
+| `'count'` | **Selected file** with a count | **Selected files** with a count |
+
+## What the user sees
+
+- A card titled **Attach content to ask questions** appears above the chat input, with an **Attach** button and a close button. It shows the title or count set by `suggestionLabel`.
+- While the card is visible, Libra checks research documents against your FAB index in the background. The user doesn't see this check. Legal software documents aren't checked in the background, because checking one adds it to the user's project.
+- When the user selects **Attach**, every suggested attachment that isn't already in the chat input is added, the same way as with [`addAttachments()`](/integration/add-attachments#what-the-user-sees):
+  - A group whose check has finished appears right away, ready or disabled.
+  - A group still being checked appears in a loading state until the check finishes.
+  - An unavailable group appears as disabled attachments, with a notice that offers **Try again** and **Remove**.
+  - A legal software document is linked into the user's active project and shows a loading state while Libra indexes it.
+  - A host file is uploaded into the user's active project.
+- **Attach** and the close button both hide the card until your next `setSuggestedAttachments()` call. Removing the attachments doesn't bring it back.
+- The card stays hidden while every suggested attachment is already in the chat input.
+- A new `setSuggestedAttachments()` call replaces the card. `clearSuggestedAttachments()` removes it; attachments the user already added stay in the chat input.
+
+See [Current-document context](/capabilities/current-document) for screenshots.
+
+## Deprecated suggestion methods
+
+These methods still work and forward to the new ones. Each logs a deprecation warning in the console. To migrate, rename the call and wrap the single attachment in an array:
+
+| Deprecated | Replacement |
+| --- | --- |
+| `setSuggestedAttachment(attachment)` | `setSuggestedAttachments([attachment])` |
+| `clearSuggestedAttachment()` | `clearSuggestedAttachments()` |
+| `setDocumentSuggestion(document)` | `setSuggestedAttachments([document])` |
+| `clearDocumentSuggestion()` | `clearSuggestedAttachments()` |
+
+To attach documents without a suggestion, see [Add attachments](/integration/add-attachments).

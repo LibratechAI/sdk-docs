@@ -1,0 +1,34 @@
+---
+title: "Document Viewer integration"
+description: "Understand the Document Viewer boundary when the SDK displays documents."
+---
+
+The SDK starts and synchronizes its document viewer as part of the embedded session. The viewer is an internal SDK surface, not a separately mounted host component. See [Document Viewer](/capabilities/document-viewer) for what users see.
+
+## What the host controls
+
+The host controls the surrounding layout, document permissions, and any navigation it claims through `onCitationClick`. To open a research citation in a host-owned viewer instead, see [Citation ownership](/integration/citation-clicks).
+
+## Locale synchronization
+
+`Libra.setLocale()` updates the embedded chat and the SDK-managed document viewer together. Register the locale before initialization. The host does not need to mount or message the viewer separately.
+
+## Viewer boundary
+
+<Note>
+The current public SDK does not provide a standalone viewer-mount API. Internal iframe synchronization, viewer messages, frame selectors, and layout protocols are implementation details, not host integration contracts.
+</Note>
+
+The public SDK does not export a standalone viewer constructor, viewer mount API, or generated-document handoff callback in the `0.16.0` baseline. Internal viewer synchronization messages and snapshots are implementation details and are not a host integration contract.
+
+If the product needs a generated document or a product-specific viewer route, keep that handoff in the host application. Use a host-owned action or claim a citation with `onCitationClick`; do not depend on internal iframe messages.
+
+## Verification checklist
+
+- Attach the SDK to a visible target before testing viewer behavior.
+- Verify citation navigation for both a full document and an anchored passage.
+- Verify locale changes update the embedded surfaces together.
+- Verify host-owned viewer routes preserve authorization and document access.
+- Verify the host does not rely on internal viewer frame selectors or messages.
+
+See [Citation clicks](/integration/citation-clicks) and [locales](/integration/locales) for the public contracts.

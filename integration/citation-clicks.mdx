@@ -1,0 +1,45 @@
+---
+title: "Citation clicks"
+description: "Open cited research documents in your own viewer instead of a new tab."
+---
+
+Register `onCitationClick` when your product can open research documents in its own viewer. The callback receives the research source, URL, and optional passage text. The SDK opens unclaimed URLs in a new tab by default.
+
+```ts
+Libra.init({
+	productId: 'wko_de',
+	onCitationClick: (event) => {
+		if (event.data.source === 'wko_de') {
+			event.preventDefault();
+			hostViewer.open({
+				url: event.data.url,
+				selectedText: event.data.content
+			});
+			return;
+		}
+
+		// Leave citations owned by other sources untouched.
+		// The SDK opens them in a new tab.
+	}
+});
+```
+
+Call `event.preventDefault()` only when your product has claimed the navigation. For citations you don't own, leave the event untouched so the SDK keeps its default behavior. The public event data contains only `source`, `url`, and optional `content`; don't depend on staging-only fields such as `kind`. `data.url` may include a `documentAnchor` query parameter for section positioning. Citations for internal Libra workspace features don't reach this callback.
+
+## What the user sees
+
+- Without `onCitationClick`, or for a citation you don't claim, the cited source opens in a new browser tab.
+- For a citation you claim, nothing opens in a new tab; the user sees whatever your product does, for example your viewer scrolled to the passage.
+- Selecting the citation badge or **To source** in its tooltip points to a specific passage, so `content` is present. **View source** in the citation list points to the whole document, so `content` is absent.
+- Citations of documents the user uploaded open in the [Document Viewer](/capabilities/document-viewer) beside the SDK window and never reach `onCitationClick`.
+- For chats created before a source was renamed, the SDK converts the old source ID to the current one before calling `onCitationClick`.
+
+## Validation checklist
+
+- Confirm your product can resolve every source it claims.
+- Preserve the URL, including any document anchor.
+- Use `content` as optional cited passage text, for example to scroll to it; it may be absent.
+- Test both claimed and unclaimed citations.
+- Verify that unclaimed citations open in a new tab and claimed citations stay in your viewer.
+
+See [Citation navigation](/capabilities/citation-navigation) for what users see and [Navigation and handoffs](/integration/navigation-and-handoffs) for chat navigation.

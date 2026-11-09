@@ -1,11 +1,11 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "maple",
-  "name": "Libra SDK",
+  "name": "Libra SDK Documentation",
   "colors": {
-    "primary": "#1A1A1A",
-    "light": "#FAFAFA",
-    "dark": "#1A1A1A"
+    "primary": "#16A34A",
+    "light": "#07C983",
+    "dark": "#15803D"
   },
   "favicon": "/favicon.svg",
   "fonts": {
@@ -25,86 +25,862 @@
   "icons": {
     "library": "lucide"
   },
-  "logo": {
-    "light": "/assets/images/brand/libra-wk-pos.png",
-    "dark": "/assets/images/brand/libra-wk-rev.png",
-    "href": "/"
-  },
-  "navbar": {
-    "links": [
+  "navigation": {
+    "versions": [
       {
-        "label": "Playground",
-        "href": "https://sdk.staging.libratech.ai/playground.html"
+        "version": "0.16.0",
+        "tag": "Latest",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "/integration/playground",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "/changelog",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "index",
+              "solution/overview"
+            ]
+          },
+          {
+            "group": "Integration guide",
+            "icon": "plug",
+            "pages": [
+              "integration/overview",
+              {
+                "group": "Get started",
+                "expanded": true,
+                "pages": [
+                  "integration/quickstart",
+                  "integration/playground",
+                  "integration/configuration"
+                ]
+              },
+              {
+                "group": "Implement",
+                "expanded": true,
+                "pages": [
+                  "integration/lifecycle",
+                  "integration/authentication",
+                  "integration/bff-authentication",
+                  "integration/attachments",
+                  "integration/suggestions",
+                  "integration/add-attachments",
+                  "integration/citation-clicks",
+                  "integration/navigation-and-handoffs",
+                  "integration/locales",
+                  "integration/document-viewer"
+                ]
+              },
+              {
+                "group": "Deploy",
+                "expanded": true,
+                "pages": [
+                  "integration/deployment-security",
+                  "integration/trusted-origins",
+                  "integration/embedding-constraints",
+                  "integration/production-readiness"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "API reference",
+            "icon": "book-open",
+            "pages": [
+              "reference/overview"
+            ]
+          },
+          {
+            "group": "Capabilities",
+            "icon": "sparkles",
+            "pages": [
+              "capabilities/overview",
+              {
+                "group": "SDK-specific",
+                "expanded": true,
+                "pages": [
+                  "capabilities/sdk-window",
+                  "capabilities/current-document",
+                  "capabilities/citation-navigation",
+                  "capabilities/document-viewer",
+                  "capabilities/sign-in-and-onboarding",
+                  "capabilities/language",
+                  "capabilities/handoffs"
+                ]
+              },
+              {
+                "group": "Libra-native",
+                "expanded": true,
+                "pages": [
+                  "capabilities/chat-and-answers",
+                  "capabilities/research-sources-and-citations",
+                  "capabilities/files-and-tools",
+                  "capabilities/assistants-history-projects"
+                ]
+              }
+            ]
+          },
+          {
+            "group": "Status and support",
+            "icon": "life-buoy",
+            "pages": [
+              "status/overview",
+              "status/faq",
+              "changelog"
+            ]
+          }
+        ]
       },
       {
-        "label": "Libra docs",
-        "href": "https://docs.libratech.ai"
+        "version": "0.15.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.15.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.15.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.15.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.15.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.15.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.15.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.15.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.14.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.14.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.14.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.14.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.14.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.14.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.14.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.14.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.13.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.13.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.13.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.13.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.12.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.12.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.12.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.12.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.12.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.12.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.12.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.12.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.11.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.11.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.11.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.11.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.11.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.11.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.11.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.11.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.10.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.10.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.10.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.10.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.10.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.10.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.10.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.10.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.9.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.9.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.9.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.9.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.8.2",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.8.2/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.8.2/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.8.2/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.8.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.8.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.8.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.8.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.8.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.8.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.8.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.8.0/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.7.2",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.7.2/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.7.2/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.7.2/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.7.1",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.7.1/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.7.1/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.7.1/index"
+            ]
+          }
+        ]
+      },
+      {
+        "version": "0.7.0",
+        "global": {
+          "anchors": [
+            {
+              "anchor": "Playground",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.7.0/playground.html",
+              "icon": "flask-conical"
+            },
+            {
+              "anchor": "Libra documentation",
+              "href": "https://docs.libratech.ai/en/getting-started/welcome",
+              "icon": "library"
+            },
+            {
+              "anchor": "Changelog",
+              "href": "https://sdk.staging.libratech.ai/versions/v0.7.0/changelog.html",
+              "icon": "history"
+            }
+          ]
+        },
+        "groups": [
+          {
+            "group": "Libra SDK",
+            "icon": "house",
+            "pages": [
+              "versions/v0.7.0/index"
+            ]
+          }
+        ]
       }
     ]
+  },
+  "logo": {
+    "light": "/images/brand/libra-wk-pos.png",
+    "dark": "/images/brand/libra-wk-rev.png",
+    "href": "/"
   },
   "contextual": {
     "options": [
       "copy",
       "view",
+      "chatgpt",
       "claude",
-      "cursor"
+      "perplexity",
+      "mcp",
+      "cursor",
+      "vscode"
     ]
   },
-  "navigation": {
-    "groups": [
-      {
-        "group": "Getting started",
-        "icon": "rocket",
-        "pages": [
-          "index",
-          "getting-started/quickstart",
-          "getting-started/how-it-works",
-          "getting-started/playground"
-        ]
-      },
-      {
-        "group": "Integration guides",
-        "icon": "plug",
-        "pages": [
-          "guides/installation",
-          "guides/embedding",
-          "guides/panel-and-placement",
-          "guides/authentication",
-          "guides/proxy-mode",
-          "guides/locales",
-          "guides/citations",
-          "guides/document-suggestions",
-          "guides/chat-handoff",
-          "guides/security-headers",
-          "guides/best-practices"
-        ]
-      },
-      {
-        "group": "Capabilities",
-        "icon": "sparkles",
-        "pages": [
-          "capabilities/overview",
-          "capabilities/chat",
-          "capabilities/context-and-sources",
-          "capabilities/plans-and-limits",
-          "capabilities/products-and-sources"
-        ]
-      },
-      {
-        "group": "Reference",
-        "icon": "book-open",
-        "pages": [
-          "reference/api",
-          "reference/types"
-        ]
-      },
-      {
-        "group": "Resources",
-        "icon": "history",
-        "pages": [
-          "changelog"
-        ]
-      }
-    ]
-  }
+  "redirects": [
+    {
+      "source": "/functionalities",
+      "destination": "/capabilities/overview"
+    },
+    {
+      "source": "/solution-overview",
+      "destination": "/solution/overview"
+    },
+    {
+      "source": "/integration",
+      "destination": "/integration/overview"
+    },
+    {
+      "source": "/quickstart",
+      "destination": "/integration/quickstart"
+    },
+    {
+      "source": "/playground",
+      "destination": "/integration/playground"
+    },
+    {
+      "source": "/lifecycle",
+      "destination": "/integration/lifecycle"
+    },
+    {
+      "source": "/authentication",
+      "destination": "/integration/authentication"
+    },
+    {
+      "source": "/bff-authentication",
+      "destination": "/integration/bff-authentication"
+    },
+    {
+      "source": "/host-integrations",
+      "destination": "/integration/attachments"
+    },
+    {
+      "source": "/integration/host-integrations",
+      "destination": "/integration/attachments"
+    },
+    {
+      "source": "/navigation-and-handoffs",
+      "destination": "/integration/navigation-and-handoffs"
+    },
+    {
+      "source": "/locales",
+      "destination": "/integration/locales"
+    },
+    {
+      "source": "/document-viewer",
+      "destination": "/integration/document-viewer"
+    },
+    {
+      "source": "/deployment-security",
+      "destination": "/integration/deployment-security"
+    },
+    {
+      "source": "/trusted-origins",
+      "destination": "/integration/trusted-origins"
+    },
+    {
+      "source": "/embedding-constraints",
+      "destination": "/integration/embedding-constraints"
+    },
+    {
+      "source": "/production-readiness",
+      "destination": "/integration/production-readiness"
+    },
+    {
+      "source": "/sdk-reference",
+      "destination": "/reference/overview"
+    },
+    {
+      "source": "/status-support",
+      "destination": "/status/overview"
+    },
+    {
+      "source": "/getting-started/quickstart",
+      "destination": "/integration/quickstart"
+    },
+    {
+      "source": "/getting-started/how-it-works",
+      "destination": "/integration/lifecycle"
+    },
+    {
+      "source": "/getting-started/playground",
+      "destination": "/integration/playground"
+    },
+    {
+      "source": "/guides/installation",
+      "destination": "/integration/quickstart"
+    },
+    {
+      "source": "/guides/embedding",
+      "destination": "/integration/lifecycle"
+    },
+    {
+      "source": "/guides/panel-and-placement",
+      "destination": "/integration/embedding-constraints"
+    },
+    {
+      "source": "/guides/authentication",
+      "destination": "/integration/authentication"
+    },
+    {
+      "source": "/guides/proxy-mode",
+      "destination": "/integration/bff-authentication"
+    },
+    {
+      "source": "/guides/locales",
+      "destination": "/integration/locales"
+    },
+    {
+      "source": "/guides/citations",
+      "destination": "/integration/citation-clicks"
+    },
+    {
+      "source": "/guides/document-suggestions",
+      "destination": "/integration/suggestions"
+    },
+    {
+      "source": "/guides/chat-handoff",
+      "destination": "/integration/navigation-and-handoffs"
+    },
+    {
+      "source": "/guides/security-headers",
+      "destination": "/integration/deployment-security"
+    },
+    {
+      "source": "/guides/best-practices",
+      "destination": "/integration/production-readiness"
+    },
+    {
+      "source": "/capabilities/chat",
+      "destination": "/capabilities/chat-and-answers"
+    },
+    {
+      "source": "/capabilities/context-and-sources",
+      "destination": "/capabilities/research-sources-and-citations"
+    },
+    {
+      "source": "/capabilities/plans-and-limits",
+      "destination": "/solution/overview"
+    },
+    {
+      "source": "/capabilities/products-and-sources",
+      "destination": "/reference/overview"
+    },
+    {
+      "source": "/reference/api",
+      "destination": "/reference/overview"
+    },
+    {
+      "source": "/reference/types",
+      "destination": "/reference/overview"
+    }
+  ]
 }

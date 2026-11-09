@@ -1,0 +1,244 @@
+---
+title: "Libra SDK 0.7.2"
+sidebarTitle: "SDK 0.7.2"
+description: "The @libra/sdk 0.7.2 README, as the SDK staging site publishes it."
+---
+
+<Note>
+Full documentation starts with SDK 0.16.0. For 0.7.2, this page shows the SDK README as the [SDK staging site](https://sdk.staging.libratech.ai/versions/v0.7.2/index.html) publishes it. To try this release, use its [playground](https://sdk.staging.libratech.ai/versions/v0.7.2/playground.html).
+</Note>
+
+Embeddable chat widget for integrating Libra's AI-powered legal research into any web application. Ships as a single JavaScript file that renders the full chat interface inside an isolated iframe — no external resources, no CSS conflicts, no setup beyond a single function call.
+
+## Installation
+
+Add the following to your `.npmrc`. You will need an `ARTIFACTORY_TOKEN` environment variable set to your WK Artifactory token.
+
+```
+@libra:registry=https://artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/
+//artifactory.wolterskluwer.io/artifactory/api/npm/libra-expert-ai-npm/:_authToken=${ARTIFACTORY_TOKEN}
+```
+
+```bash
+npm install @libra/sdk
+```
+
+## Quick Start
+
+Call `Libra.init()` once at app startup, then `Libra.attach()` when the user opens the widget and `Libra.detach()` when they close it. The iframe is created on `init()` but the chat session does not start — and no network requests are made — until the first `attach()`.
+
+```html
+<button id="open-chat">Open Chat</button>
+<div id="chat" style="position: fixed; right: 16px; bottom: 16px; width: 400px; height: 600px;"></div>
+```
+
+```javascript
+import { Libra } from '@libra/sdk';
+
+Libra.init({
+  onClose: () => Libra.detach()
+});
+
+document.getElementById('open-chat').addEventListener('click', () => {
+  Libra.attach('chat');
+});
+```
+
+The SDK creates an iframe on `document.body`, positions it over your container when attached, handles authentication via an Auth0 popup, and renders the chat interface. The session (conversation, scroll position, in-progress streaming) is preserved across `detach()` / `attach()` cycles.
+
+## API Reference
+
+### `Libra.init(config)`
+
+Initializes the SDK and creates the iframe. Call after `document.body` exists. Startup is deferred until the first `attach()`.
+
+| Property | Type | Default | Description |
+|----------|------|---------|-------------|
+| `mountTarget` | `string \| HTMLElement` | `document.body` | Element (or its ID) to mount the SDK wrapper into. See [Stacking Context](#stacking-context). |
+| `zIndex` | `number` | `999999` | `z-index` applied to the SDK wrapper. |
+| `baseUrl` | `string` | `"https://app.libratech.ai"` | Libra backend URL. |
+| `researchSources` | `ResearchSourceId[]` | `[]` | Pre-selected research sources. |
+| `locale` | `SupportedLocale` | Browser detection | BCP-47 locale code (e.g. `'de-DE'`). Falls back to `en-US`. |
+| `onClose` | `() => void` | — | Fired when the user clicks the close button in the widget's navbar. |
+| `onAuthStateChange` | `(state: LibraAuthState) => void` | — | Fired after the SDK restores a session, completes an interactive login, or signs out. |
+| `onAuthError` | `(error: LibraAuthError) => void` | — | Fired when an interactive login attempt is unsuccessful. |
+
+### `Libra.attach(elementOrId)`
+
+Visually positions the widget over the given target element. The iframe is never moved in the DOM — only its CSS position is updated — so the chat session and any in-progress streaming response are fully preserved across re-attaches. Accepts a DOM element or a string element ID. Can be called while the iframe is still loading.
+
+### `Libra.detach()`
+
+Hides the widget. The iframe stays alive so the session is preserved. Call `attach()` again to reposition it — even to a different container.
+
+### `Libra.setDocumentSuggestion(doc)`
+
+Suggests an external document the user is currently viewing. A suggestion chip ("+ [title]") appears above the message input. When clicked, the document is attached to the message and the LLM can retrieve its content. Calling this again replaces the previous suggestion.
+
+```javascript
+Libra.setDocumentSuggestion({
+  id: 'doc-uuid-123',
+  title: 'Article 162 [Tort]',
+  url: 'https://research.example.com/document/doc-uuid-123',
+  source: 'wolters_kluwer_de'
+});
+```
+
+### `Libra.clearDocumentSuggestion()`
+
+Clears the current document suggestion (e.g. when the user navigates away from the document).
+
+### `Libra.setLocale(locale)`
+
+Updates the widget's UI language at runtime. Translated strings re-render in place, the chat session is preserved, and the locale is persisted in the iframe's `localStorage`.
+
+```javascript
+Libra.setLocale('de-DE');
+```
+
+### `Libra.destroy()`
+
+Removes the iframe and cleans up all resources. To re-create the widget afterwards, call `init()` again.
+
+### `Libra.signOut()`
+
+Signs the user out and shows the login screen.
+
+### Types
+
+All types are exported from `@libra/sdk`:
+
+```typescript
+import type {
+  LibraConfig,
+  LibraAuthState,
+  LibraAuthError,
+  ExternalDocument,
+  ExternalDocumentSource,
+  ResearchSourceId,
+  SupportedLocale
+} from '@libra/sdk';
+
+type LibraConfig = {
+  baseUrl?: string;
+  mountTarget?: string | HTMLElement;
+  zIndex?: number;
+  researchSources?: ResearchSourceId[];
+  locale?: SupportedLocale;
+  onAuthStateChange?: (state: LibraAuthState) => void;
+  onAuthError?: (error: LibraAuthError) => void;
+  onClose?: () => void;
+};
+
+type LibraAuthState =
+  | { status: 'authenticated'; source: 'existing_session' | 'signin' | 'signup' }
+  | { status: 'unauthenticated'; source: 'no_session' | 'signout' };
+
+type LibraAuthError = {
+  source: 'signin' | 'signup';
+  reason: 'popup_blocked' | 'popup_closed' | 'authentication_failed';
+};
+
+type ExternalDocument = {
+  id: string;
+  title: string;
+  url: string;
+  source: ExternalDocumentSource;
+};
+
+type ExternalDocumentSource =
+  | 'wolters_kluwer_de' | 'wolters_kluwer_nl' | 'wolters_kluwer_be'
+  | 'wolters_kluwer_pl' | 'wolters_kluwer_it_legale' | 'wolters_kluwer_ro'
+  | 'wolters_kluwer_cz' | 'wolters_kluwer_sk' | 'wolters_kluwer_hu'
+  | 'inview_legal_tax' | 'inview_legal_tax_be'
+  | 'social_eye_be' | 'legal_intelligence'
+  | 'de_pubsec_jobcenter' | 'de_pubsec_sozial'
+  | 'de_pubsec_auslr' | 'de_pubsec_star';
+
+type ResearchSourceId =
+  | 'web_search' | 'legal_web_search'
+  | 'otto_schmidt' | 'wolters_kluwer'
+  | 'wolters_kluwer_de' | 'wolters_kluwer_pl' | 'wolters_kluwer_nl'
+  | 'wolters_kluwer_be' | 'wolters_kluwer_hu' | 'wolters_kluwer_ro'
+  | 'wolters_kluwer_cz' | 'wolters_kluwer_sk'
+  | 'wolters_kluwer_it_legale' | 'wolters_kluwer_it_fiscale'
+  | 'wolters_kluwer_it_lavoro' | 'wolters_kluwer_it_penale'
+  | 'staempfli' | 'entscheidsuche' | 'opencaselaw' | 'zefix'
+  | 'onlinekommentar' | 'openregister' | 'eurlex' | 'fedlex_search'
+  | 'upc' | 'kli_search' | 'legal_intelligence'
+  | 'inview_legal_tax' | 'monkey_be' | 'vitallaw'
+  | 'de_pubsec_jobcenter' | 'de_pubsec_sozial'
+  | 'de_pubsec_auslr' | 'de_pubsec_star';
+
+type SupportedLocale =
+  | 'en-US'
+  | 'de-DE' | 'de-CH'
+  | 'pl-PL'
+  | 'nl-NL' | 'nl-BE'
+  | 'fr-BE' | 'fr-CH'
+  | 'it-IT' | 'it-CH'
+  | 'ro-RO' | 'hu-HU' | 'cs-CZ' | 'sk-SK';
+```
+
+## Stacking Context
+
+By default the SDK appends its wrapper to `document.body` with `z-index: 999999`. Use `mountTarget` to mount the wrapper inside an element you control, then manage stacking via that element instead of fighting the global `z-index`.
+
+```javascript
+Libra.init({
+  mountTarget: 'root',
+  zIndex: 5
+});
+```
+
+Give the mount element its own stacking context so the SDK's `z-index` is trapped inside it:
+
+```css
+#root { isolation: isolate; }
+```
+
+With this in place, host overlays inside `#root` can use any `z-index` (e.g. `12`) and stack above the widget naturally.
+
+### Constraints
+
+- Set `mountTarget` once at init. The iframe cannot be reparented later — moving an iframe in the DOM causes the browser to reload it, destroying the chat session.
+- The mount target must remain in the DOM for the SDK's lifetime.
+- If the configured target is missing at init time, the SDK falls back to `document.body`.
+- **The mount target and its ancestors must not establish a containing block for fixed positioning.** `transform`, `perspective`, `filter`, `backdrop-filter`, `will-change: transform | perspective | filter`, and `contain: paint | layout | content | strict` on any ancestor will silently misplace the widget. **`isolation: isolate` is safe** — it creates a stacking context without creating a containing block. The SDK emits a `console.warn` when it detects a known offender on the mount target's ancestor chain.
+
+## Authentication
+
+The SDK handles authentication automatically via an Auth0 popup. The auth screen offers both **Sign in** (existing users) and **Create account** (new users); new accounts are walked through onboarding inside the iframe before the chat mounts. Tokens are stored inside the iframe's `localStorage`, and subsequent loads skip the auth screen if a valid token exists. **No auth configuration is needed from the host application.**
+
+`onAuthStateChange` reports auth-status transitions:
+
+- `authenticated / existing_session` — valid session restored at startup
+- `authenticated / signin` — user just completed the sign-in popup
+- `authenticated / signup` — user just completed the sign-up popup (the iframe then runs onboarding before mounting the chat)
+- `unauthenticated / no_session` — no valid session at startup
+- `unauthenticated / signout` — session was cleared
+
+`onAuthError` reports failed interactive sign-in or sign-up attempts with `reason`: `popup_blocked`, `popup_closed`, or `authentication_failed`. Failed attempts do not emit an auth-state event.
+
+**Account-state gating:** even after a successful login, the SDK may render an in-iframe overlay if the user's account is in a restricted state (onboarding incomplete, expired trial, canceled subscription, pending team membership, inactive subscription). The chat UI is not mounted while a gate is active. Signing out from any gate emits `unauthenticated / signout`.
+
+Call `Libra.signOut()` to programmatically sign the user out.
+
+## Browser Permissions
+
+If your host page sets a restrictive `Permissions-Policy` header, you must allow `microphone` for voice input to work — otherwise it will be blocked inside the iframe. The SDK iframe inherits your page's origin, so allowing `self` is sufficient:
+
+```
+Permissions-Policy: microphone=(self)
+```
+
+If your page does not set a `Permissions-Policy` header at all, no configuration is needed.
+
+## Isolation Guarantees
+
+The SDK runs the chat interface inside an `<iframe>` loaded from a blob URL with all assets inlined:
+
+- **Zero external requests at load time** — the bundle is self-contained
+- **Full CSS isolation** — host styles cannot affect the widget and vice versa
+- **No CSP issues** — the blob URL iframe has its own document context, independent of your page's Content-Security-Policy
+- **Session persistence** — `attach()` / `detach()` only update the iframe's CSS position, so chat state (conversation, scroll, in-progress streaming) is preserved across re-attaches

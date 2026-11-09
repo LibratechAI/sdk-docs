@@ -1,0 +1,117 @@
+---
+title: "API reference"
+description: "Look up the public contract for the Libra SDK."
+---
+
+This page documents the public `@libra/sdk` contract for version `0.16.0` (source revision `d279087e2831f06574800f973d708659e8d05623`), generated from the package's public declaration entry point `dist/index.d.ts`.
+
+The reference does not expose internal iframe messages, viewer snapshots, storage shims, fetch interceptors, or application components.
+
+## Public entry point
+
+Import the SDK from the package or its versioned CDN bundle:
+
+```ts
+import { Libra } from '@libra/sdk';
+```
+
+The package exports `Libra` and the public types listed below. The npm package declares `dist/index.d.ts` as its type entry point and exposes locale subpaths under `@libra/sdk/locales/*`.
+
+## Libra methods
+
+| Method | Purpose | Lifecycle requirement |
+| --- | --- | --- |
+| `Libra.init(config)` | Create the SDK iframe and resolve configuration. | Call once after `document.body` exists. Call `destroy()` before reinitializing. |
+| `Libra.attach(elementOrId)` | Reveal and position the widget over a host target and start the session on first attach. | The target must exist and have usable dimensions. |
+| `Libra.detach()` | Hide the widget while preserving the active session. | Safe to call when temporarily hiding the widget. |
+| `Libra.destroy()` | Remove the widget, listeners, viewer, and SDK resources. | Call `init()` again before the next attach. |
+| `Libra.signOut()` | Ask the active session to sign out. | Requires an attached session. |
+| `Libra.setSuggestedAttachments(attachments)` | Show a suggestion card whose **Attach** button adds the host documents or files, each with its nested attachments. Replaces the previous suggestion. Takes an array. | Requires an attached session. |
+| `Libra.clearSuggestedAttachments()` | Clear the current suggestion card. Attachments already added stay. | Requires an attached session. |
+| `Libra.addAttachments(attachments)` | Attach host documents or files to the current chat input without a suggestion. | Requires an attached session. |
+| `Libra.clearAttachments()` | Remove every host-provided attachment from the chat input. | Requires an attached session. |
+| `Libra.setSuggestedAttachment(attachment)` | Deprecated. Forwards to `setSuggestedAttachments([attachment])` and logs a warning. | Requires an attached session. |
+| `Libra.clearSuggestedAttachment()` | Deprecated. Forwards to `clearSuggestedAttachments()` and logs a warning. | Requires an attached session. |
+| `Libra.setDocumentSuggestion(document)` | Deprecated. Forwards to `setSuggestedAttachments([document])` and logs a warning. | Requires an attached session. |
+| `Libra.clearDocumentSuggestion()` | Deprecated. Forwards to `clearSuggestedAttachments()` and logs a warning. | Requires an attached session. |
+| `Libra.setLocale(locale)` | Change the active registered locale. | Register the locale during `init()` or load its CDN bundle before `init()`. Requires an attached session. |
+| `Libra.openChatById(chatId)` | Open an existing chat by its host-provided ID. | Requires an attached session; empty IDs are ignored. |
+| `Libra.startNewChat()` | Reset the loaded chat to a blank conversation. | Requires an attached session with a loaded chat. To start the first session blank, use `restorePreviousChat: false`. |
+
+See [Lifecycle and configuration](/integration/lifecycle) and [Authentication](/integration/authentication) for lifecycle and configuration decisions. See [Suggest attachments](/integration/suggestions), [Add attachments](/integration/add-attachments), [Navigation and handoffs](/integration/navigation-and-handoffs), and [Locales](/integration/locales) for implementation examples.
+
+<Warning>
+**FAB index required.** `setSuggestedAttachments()` and `addAttachments()` accept research documents only if they're already in your product's FAB index. Libra checks the index but doesn't add documents to it. Legal software documents and host files are indexed by Libra instead. See [Availability boundary](/integration/attachments#availability-boundary).
+</Warning>
+
+## Configuration
+
+`Libra.init()` accepts `LibraConfig`. The public options are:
+
+- `productId` identifies the broader host product and is required.
+- `researchSources` pre-selects granular research sources.
+- `restorePreviousChat` reopens the user's last active chat after a page reload. Defaults to `true`; `false` starts with a blank chat.
+- `welcomeDescription` picks the Libra-owned sign-in screen description: `'default'` or `'trustedContent'`.
+- `baseUrl` selects the Libra environment and defaults to `https://app.libratech.ai` outside proxy mode.
+- `proxy` routes API requests through a host-owned BFF.
+- `mountTarget` selects the host element that owns the SDK wrapper.
+- `zIndex` controls the wrapper's stacking order.
+- `locale` selects the initial registered locale.
+- `locales` supplies additional `LibraLocaleBundle` values.
+- `attachments.suggestionLabel` sets how the suggestion card labels its contents: `'auto'` (default) or `'count'`.
+- `onClose` handles the SDK header close action.
+- `onAuthStateChange` receives authentication state changes.
+- `onAuthError` receives interactive authentication failures.
+- `onCitationClick` can claim supported citation navigation with `preventDefault()`.
+
+The exact field types are in the package's `dist/index.d.ts`. The current behavioral constraints are documented in [Embedding and layout constraints](/integration/embedding-constraints), [Trusted origins](/integration/trusted-origins), and [BFF and proxy authentication](/integration/bff-authentication).
+
+## Exported types
+
+The public entry point re-exports these type groups:
+
+### Attachments, documents, and citations
+
+- `Attachment` (`ExternalDocument | HostFile`)
+- `AttachmentSuggestionLabel` (`'auto' | 'count'`)
+- `ExternalDocument`
+- `ExternalDocumentAttachment`
+- `HostFile`
+- `CitationClickEvent`
+- `CitationClickEventData`
+
+### Authentication
+
+- `LibraAuthState`
+- `LibraAuthError`
+- `LibraAuthErrorReason`
+- `WelcomeDescription` (`'default' | 'trustedContent'`)
+
+### Locales
+
+- `LibraLocaleBundle`
+- `SupportedLocale`
+
+### Identifiers
+
+- `ProductId` (`'libra' | 'ra_micro' | ResearchProductId | LegalSoftwareProductId`)
+- `ResearchProductId`
+- `LegalSoftwareProductId`
+- `ResearchSourceId`
+- `LegalSoftwareSourceId`
+
+The generated reference must preserve the exact unions and field types from the matching package declarations. Do not infer supported identifiers from product UI labels or internal implementation modules.
+
+## Version and distribution checks
+
+For a release review, compare all three surfaces:
+
+1. The package version and `types` entry in `package.json`.
+2. The emitted declarations from `tsconfig.build.json`.
+3. The versioned npm/CDN assets listed by the package's CDN configuration.
+
+The staging baseline used for this overview is `@libra/sdk@0.16.0`; production promotion must be confirmed separately.
+
+## Reference status
+
+The public contract overview is source-checked against `@libra/sdk@0.16.0`, source revision `d279087e2831f06574800f973d708659e8d05623`, and the generated public entry-point surface. Compared with `0.15.1`, `0.16.0` added `setSuggestedAttachments()`, `clearSuggestedAttachments()`, and `startNewChat()`; added the `restorePreviousChat`, `welcomeDescription`, and `attachments.suggestionLabel` options to `LibraConfig`; added the `AttachmentSuggestionLabel` and `WelcomeDescription` types; and deprecated `setSuggestedAttachment()` and `clearSuggestedAttachment()`. The reference covers the shipped `Libra` methods, configuration fields, callbacks, and exported types without presenting internal implementation details as public API.

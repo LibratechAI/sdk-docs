@@ -11,4 +11,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: node scripts/check.mjs
+      - name: Structure, links, and redirects
+        run: node scripts/check.mjs
+      - name: Every page has a release-scan owner
+        run: node scripts/sdk-release-scan.mjs --check-coverage
+      - name: Screenshot manifest and image references
+        working-directory: assets-pipeline
+        # Install scripts download browsers and ffmpeg, which validation doesn't need.
+        run: npm ci --ignore-scripts && npm run validate
+      - name: Mintlify validation
+        run: npx --yes mint@4.2.1166 validate && npx --yes mint@4.2.1166 broken-links
