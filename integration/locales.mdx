@@ -55,4 +55,8 @@ The public type currently lists: `en-US`, `de-DE`, `de-CH`, `es-ES`, `pl-PL`, `n
 
 Availability of a locale bundle is separate from the type's supported-code list. Confirm that the matching npm or CDN asset exists for the SDK version you ship.
 
+## Changing the wording
+
+Pass the locale bundles the SDK ships, unchanged. Editing their `translations` to change the wording isn't supported: the keys aren't part of the public API and can change in any release. To choose the sign-in screen's description, use `welcomeDescription`; see [What you can configure](/integration/configuration). To ask for other wording, use the [Product Requests & Feedback form](https://app.notion.com/p/Product-Requests-Feedback-277eb48252ec801685a5c40c98d3f50d).
+
 See [the Quickstart](/integration/quickstart) for the base npm and CDN setup.

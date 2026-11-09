@@ -22,6 +22,9 @@ Use this checklist during browser, security, and layout review. Record the SDK p
 - [ ] The BFF authenticates every request and validates product access and identity linking.
 - [ ] Libra JWTs, exchange credentials, and link secrets stay server-side.
 - [ ] Proxy failures, `401` responses, and identity-linking failures have an owner and recovery path.
+- [ ] The BFF relays `DELETE` and multipart uploads unchanged, allows large request and response bodies, and keeps streaming requests open for several minutes. See [Proxy requirements](/integration/bff-authentication#proxy-requirements).
+- [ ] The BFF caches exchanged tokens per user and backs off after a `429`. See [Rate limits and caching](/integration/bff-authentication#rate-limits-and-caching).
+- [ ] Every host origin, for each environment, is on Libra's trusted-origin list. See [Host origins](/integration/trusted-origins#host-origins).
 
 ## Layout and browser behavior
 

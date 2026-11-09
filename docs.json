@@ -142,6 +142,7 @@
             "icon": "life-buoy",
             "pages": [
               "status/overview",
+              "status/faq",
               "changelog"
             ]
           }

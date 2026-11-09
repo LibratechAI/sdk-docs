@@ -126,7 +126,7 @@ const REVIEW_EACH_RELEASE = [
   "index", "solution/overview", "capabilities/overview",
   "capabilities/chat-and-answers", "capabilities/research-sources-and-citations",
   "capabilities/files-and-tools", "capabilities/assistants-history-projects",
-  "status/overview", "changelog",
+  "status/overview", "status/faq", "changelog",
 ];
 
 // ---- Argument parsing -----------------------------------------------------

@@ -48,6 +48,14 @@ The SDK checks each group, a document plus its nested `attachments`, against you
 
 `HostFile` entries skip the check and upload right away.
 
+#### Match the source
+
+The check looks for the document in the FAB index of the `source` you pass. A document indexed under one source is unavailable when you pass another, even a related one. For example, a criminal-law document passed as `one_it_legale_civile` instead of `one_it_legale_penale` fails the check.
+
+- **`Unknown research source: <source>`** means Libra isn't set up for that source in this environment. This is Libra configuration, so contact the Libra team.
+- **Each entry is one document.** IDs are matched exactly: wildcards and prefixes aren't supported. A document stored as several FAB records can't be attached as one; pass each record, or group related files with nested `attachments`.
+- **A console error for a suggested document that isn't in the index is expected.** The user sees the document as unavailable after **Attach**.
+
 ### Legal software documents
 
 Legal software sources (`kleos`, `legisway`, `notaionext`, `suitenext`) aren't in the FAB index. Libra links the document into the active project's Chat uploads folder and starts indexing it. It's available when indexing finishes. It's disabled if the user has no connection to the product, the product isn't enabled for the team, or indexing doesn't finish within 90 seconds. A suggested legal software document is linked, and indexed, only when the user selects **Attach**, because linking adds a file to the user's project.

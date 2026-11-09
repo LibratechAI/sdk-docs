@@ -5,6 +5,13 @@ description: "Review compatibility, releases, limitations, and support paths."
 
 The reviewed SDK baseline is `@libra/sdk@0.16.0`. See the [Changelog](/changelog) for release notes and the [API reference](/reference/overview) for the public contract.
 
+## Versions
+
+- **0.x releases are ready for production.** The version number doesn't mean the SDK is a preview.
+- **A minor release can break the API.** Breaking changes are marked **BREAKING** in the [Changelog](/changelog); read it before you upgrade.
+- **Older SDK versions keep working with Libra.** If an update to Libra breaks an older SDK version, report it as a bug.
+- **The package is on npm and the CDN.** The npm package comes from the Wolters Kluwer Artifactory registry and includes an ES module, a UMD build for `require`, and TypeScript declarations. The CDN serves each version at `https://cdn.wolterskluwer.io/wk/libra-sdk/<version>/`. See the [Quickstart](/integration/quickstart).
+
 ## Current limitations
 
 - Available tools, research sources, Assistants, Projects, uploads, and account-state flows depend on product configuration, entitlements, indexing, and the active environment.
@@ -13,6 +20,8 @@ The reviewed SDK baseline is `@libra/sdk@0.16.0`. See the [Changelog](/changelog
 - Staging behavior and CDN availability do not by themselves prove application production promotion. Confirm the exact environment and version before release.
 
 ## Support
+
+Before you ask, check the [FAQ](/status/faq).
 
 For integration questions, email [libra-integrations@wolterskluwer.com](mailto:libra-integrations@wolterskluwer.com) or post in the [Libra SDK Integration - Dev chat](https://teams.microsoft.com/l/channel/19%3Aae4937fe4c7a4c40b45fb2c9bf349505%40thread.tacv2/Libra%20SDK%20Integration%20-%20Dev%20chat?groupId=91f72c7b-9471-43fd-bfd7-3b870128f4b7&tenantId=8ac76c91-e7f1-41ff-a89c-3553b2da2c17) channel on Microsoft Teams. Include the SDK version, environment URL, browser, reproduction steps, and any relevant correlation ID from the host BFF.
 

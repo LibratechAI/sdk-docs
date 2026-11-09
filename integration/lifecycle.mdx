@@ -111,6 +111,17 @@ As a result:
 - Clearing site data, or calling `localStorage.clear()` in host code, signs the user out and forgets the last chat.
 - Scripts on your page can read the sign-in token. See [Deployment security](/integration/deployment-security#security-boundaries).
 
+## Not reported to your product
+
+The SDK reports sign-in through `onAuthStateChange` and `onAuthError`, citation clicks through `onCitationClick`, and the close button through `onClose`. It has no other events or state getters. In particular:
+
+- **Whether the SDK window is open.** Your product opens and closes it, so track that in your own code.
+- **When the user sends a message**, or what they send.
+- **When the user changes jurisdictions or research sources.**
+- **Failed requests after sign-in.** `onAuthError` reports only failed sign-in and sign-up attempts. A `401` or another error during a request doesn't reach your product; in proxy mode, your BFF sees it.
+
+To ask for a new event, use the [Product Requests & Feedback form](https://app.notion.com/p/Product-Requests-Feedback-277eb48252ec801685a5c40c98d3f50d).
+
 ## Product ID
 
 `productId` is required. It identifies the product the integration represents: a legal-research product, a legal software product, `ra_micro`, or `libra` for Libra's own test integrations. `researchSources` is separate: it lists the more granular searchable sources selected in the chat. The complete identifier lists and the public signatures are in the [API reference](/reference/overview).

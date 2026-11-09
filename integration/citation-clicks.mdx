@@ -32,6 +32,7 @@ Call `event.preventDefault()` only when your product has claimed the navigation.
 - For a citation you claim, nothing opens in a new tab; the user sees whatever your product does, for example your viewer scrolled to the passage.
 - Selecting the citation badge or **To source** in its tooltip points to a specific passage, so `content` is present. **View source** in the citation list points to the whole document, so `content` is absent.
 - Citations of documents the user uploaded open in the [Document Viewer](/capabilities/document-viewer) beside the SDK window and never reach `onCitationClick`.
+- For chats created before a source was renamed, the SDK converts the old source ID to the current one before calling `onCitationClick`.
 
 ## Validation checklist
 

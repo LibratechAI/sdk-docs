@@ -34,6 +34,16 @@ Libra.init({
 
 This browser check is defense in depth, not authentication. The BFF must authenticate every request, validate the host user's identity and product access, and reject callers that cannot be linked to a Libra identity. See [BFF and proxy authentication](/integration/bff-authentication) for the request and identity-linking flow.
 
+## Host origins
+
+Libra completes sign-in only for host origins on its trusted-origin list. With standard sign-in, it also checks the origin of every SDK request. If your page's origin isn't on the list, sign-in fails, or the user signs in and then can't use the chat. The Libra team keeps a separate list for each environment, so send them every origin you use on staging and production:
+
+- **Scheme and host must match.** An entry without a port allows any port. An entry with a port, such as `https://dev.example.com:1234`, allows only that port.
+- **A wildcard covers subdomains.** `https://*.example.com` allows `https://preview.example.com` but not `https://example.com`; list that separately.
+- **`localhost` is allowed on staging** on any port, so local development needs no entry.
+
+To add or change an origin, contact the Libra team. See [Status and support](/status/overview#support).
+
 ## Token handling
 
 Keep Libra JWTs, exchange credentials, and link secrets on the server. Browser-visible proxy headers may carry only the host's intended caller context. Do not put long-lived secrets in `proxy.headers`, source code, or HTML.

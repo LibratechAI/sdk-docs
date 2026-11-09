@@ -119,8 +119,9 @@ docs list only what integrators can install. Run it on every release.
 - Edit the pages listed for each bucket in the scan. The Capabilities page and
   the Integration guide page for the same feature move together.
 - Review the "Review on every release" pages (Welcome, Solution overview,
-  Capabilities overview, Libra-native pages, Status and support) for anything
-  the release changed.
+  Capabilities overview, Libra-native pages, Status and support, FAQ) for
+  anything the release changed. Each FAQ answer summarizes a topic page, so
+  update it whenever that page changes.
 - New SDK concept: create a page from the existing conventions (frontmatter
   `title` + `description`), register it in `docs.json`, and add it to
   `SCOPE_MAP`.

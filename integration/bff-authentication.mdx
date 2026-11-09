@@ -30,6 +30,13 @@ Required for each environment (staging, production):
 | JWKS URL | `https://login.wolterskluwer.eu/pf/JWKS` |
 | Expected token audience (`aud`), optional | `DE.Libra.FAB` |
 
+The subject token your BFF exchanges must:
+
+- Be a JWT signed with RS256.
+- Carry the `iss` you gave Libra and a `sub` that identifies the user. Libra links accounts by these two claims.
+- Verify against a key at your JWKS URL. Auth0 fetches it when it validates the token, so the URL must be reachable from Auth0. If your identity provider restricts access by IP address, ask the Libra team which addresses to allow.
+- Not be expired. Libra uses the token's own `exp` and doesn't check `aud`.
+
 ### Libra provides to you
 
 | Item | Value |
@@ -216,6 +223,27 @@ def classify_failure(res):
 - Never log tokens (log the correlation ID instead), cache SDK responses, share a token across users, persist it, or return any token to the browser.
 - Error monitoring on the BFF is required (Sentry, Crashlytics, Datadog, or equivalent). The SDK only shows a generic error screen, so the BFF is the only place where auth failures are observable. Report every enveloped error and every exhausted retry, tagged with its `correlation_id`. When a user reports a problem, your support and Libra's use that correlation ID to trace the request end to end. Never attach tokens to the report.
 
+### Rate limits and caching
+
+Auth0 limits token exchanges for its whole tenant: a burst of 15 requests, then 15 per second. Every product shares its tenant's limit, and staging and production are separate tenants. Over the limit, Auth0 returns `429` to every client of the tenant for up to about a minute.
+
+- Cache the Libra token per user, as `get_or_exchange` does, and never share it across users.
+- Combine concurrent exchanges for the same user into one request (single-flight). The SDK sends several requests at once when it starts.
+- After a `429`, wait at least a second, with some random jitter, before you retry.
+- A new exchange doesn't invalidate earlier Libra tokens. Each stays valid until it expires.
+
+## Proxy requirements
+
+Your BFF sits between the SDK and Libra for every request, so its limits become the SDK's limits:
+
+- **Relay every request unchanged:** method, path, query, and body. Don't cache SDK responses. `link-init` is an ordinary SDK request.
+- **Allow `DELETE`.** Sign-out in proxy mode removes the identity link with a `DELETE` request.
+- **Pass multipart uploads through as they are.** If the BFF rewrites the body, Libra rejects the upload with `422`.
+- **Allow large requests and responses.** Chat requests carry the conversation and can reach hundreds of kilobytes. A low limit returns `413`.
+- **Keep long requests open.** Answers stream, and a Deep Thinking answer can take two to three minutes. A short proxy timeout cuts the answer off.
+- **Don't let WAF or CSRF rules block SDK requests**, including audio uploads for voice input.
+- **Set `baseUrl` for the environment.** The sign-in popup opens on `baseUrl`, never through your proxy, and `baseUrl` defaults to production. When you test on staging, set `baseUrl: 'https://staging.libratech.ai'`.
+
 ## First-time identity linking
 
 A host user may be authenticated by the host product but not yet linked to a Libra identity. In that case, the BFF and Libra complete a one-time link flow before the SDK can use the mapped account:
@@ -229,6 +257,18 @@ A host user may be authenticated by the host product but not yet linked to a Lib
 
 The exact customer-token validation and identity-linking contract belongs to the host/backend integration. Do not expose link secrets or token values in client-side documentation.
 
+### `user_not_found` is expected
+
+The first exchange for a user who isn't linked yet fails with `user_not_found`. This isn't an error. Forward the request without `Authorization`; Libra returns `401`, the SDK shows its sign-in screen, and signing in creates the link. Later exchanges for that user succeed without asking them to sign in.
+
+### Linking rules
+
+- An account in your product links to one Libra account for your product, and a Libra account links to one account in your product.
+- The email addresses don't need to match. The link goes to the Libra account the user signs in with.
+- If either account is already linked to someone else, sign-in fails with `account_in_use`, and the SDK shows "This account is already connected to another user. Please use a different account or contact your administrator."
+- Signing out of the SDK in proxy mode removes the link, so the next sign-in links again.
+- You can't look up a link yourself. To check or reset one, contact the Libra team.
+
 ## Proxy origin requirements
 
 `proxy.url` must be on the host's own site. See [Proxy origin validation](/integration/trusted-origins#proxy-origin-validation) for the allowed origins and [Token handling](/integration/trusted-origins#token-handling) for what stays on the server.
@@ -241,15 +281,22 @@ The host receives the standard `unauthenticated` state with source `signout`. `o
 
 The public error reasons are `popup_blocked`, `popup_closed`, `authentication_failed`, `embedded_auth_failed`, and `account_in_use`. Treat `embedded_auth_failed` as a host/BFF recovery boundary: the SDK reports the failure, but the host owns token exchange, retry, and session recovery.
 
-## Troubleshooting ownership
+## Troubleshooting
 
-| Symptom | First owner to investigate |
-| --- | --- |
-| The SDK cannot reach `proxy.url` | Host product routing, deployment, or BFF availability |
-| The BFF returns `401` | Host authentication, customer-token validation, or missing identity link |
-| Token exchange fails | Host BFF credentials or Libra backend identity exchange |
-| Popup is blocked or closed | Browser/SDK authentication flow; inspect `onAuthError` |
-| Account is linked to another user | Host identity mapping and Libra account state |
-| Authenticated account is gated | Libra onboarding, entitlement, or subscription state |
+A failed exchange returns `403` with `error: "access_denied"`. The reason is the text before the first colon in `error_description`.
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| `user_not_found` | The user isn't linked yet. | Expected. Forward without `Authorization` so the SDK shows sign-in. See [`user_not_found` is expected](#user_not_found-is-expected). |
+| `invalid_subject_token` | Libra couldn't validate the subject token: it isn't a JWT, its issuer isn't registered for this environment, it isn't RS256, Auth0 can't fetch your JWKS, or it has expired. | Check the token against the [subject token requirements](#you-provide-to-libra). Refresh an expired token and exchange again. |
+| `identity_lookup_error` | Libra's identity lookup failed temporarily. | Retry with a short backoff, then return `503`. |
+| `Hostname and client_id does not match` | The client credentials belong to the other Auth0 tenant, for example staging credentials sent to production. | Use the `client_id`, `client_secret`, and Auth0 domain for the same environment. |
+| `429` from Auth0 | Too many exchanges for the tenant. | Cache tokens and back off. See [Rate limits and caching](#rate-limits-and-caching). |
+| `401` from Libra with a freshly exchanged token | The exchange used the wrong `audience`. | Use `https://embedded.libratech.ai/api`. |
+| `account_in_use` | One of the accounts is already linked to someone else. | See [Linking rules](#linking-rules). |
+| `413`, `422`, or cut-off answers | The BFF limits body size, rewrites uploads, or times out. | See [Proxy requirements](#proxy-requirements). |
+| The SDK can't reach `proxy.url` | Host routing, deployment, or BFF availability. | Check your BFF and its route. |
+| Popup is blocked or closed | Browser popup handling. | Inspect `onAuthError`. |
+| A signed-in account sees an account screen | Libra onboarding, entitlement, or subscription state. | See [Account screens](/capabilities/sign-in-and-onboarding#account-screens). |
 
 For browser security headers and deployment validation, see [Deployment security](/integration/deployment-security) and [Production readiness](/integration/production-readiness). For the standard popup path and auth callbacks, see [Authentication](/integration/authentication). For callback shapes, see the [API reference](/reference/overview).

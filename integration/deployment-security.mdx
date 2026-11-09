@@ -19,13 +19,15 @@ Content-Security-Policy:
   worker-src 'self' blob:;
 ```
 
-Treat this as a deployment pattern, not a copy-and-paste policy. Narrow hosts and paths to the sources used by your product. The SDK bundle changes the inline-script hashes when the build changes, so calculate and review hashes for the exact SDK build you deploy.
+Treat this as a deployment pattern, not a copy-and-paste policy. Narrow hosts and paths to the sources used by your product. The inline-script hashes change with every SDK version, so recalculate them when you upgrade. They don't depend on the environment or your `Libra.init()` options, so one set of hashes works on staging and production for the same SDK version.
 
 The `blob:` allowance is relevant to the SDK's iframe documents and bundled workers. If the policy blocks the blob frame, the chat may remain blank. If it blocks `blob:` workers, document/PDF rendering can fail even when the chat frame loads.
 
 ## Workers and document rendering
 
 The document viewer can use a dedicated worker to render a PDF. Test the viewer under the production CSP, not only the initial chat mount. Include `worker-src 'self' blob:` when the deployed viewer requires blob workers; otherwise the browser may report a worker CSP violation and the PDF will not render.
+
+The viewer also loads PDFs from `blob:` URLs. If your policy sets `connect-src`, include `blob:` in it.
 
 ## Framing and Permissions Policy
 
